@@ -11,7 +11,11 @@ const AQUAGO_PORT = 7474;
 // 2) http://  → use current host
 const API_BASE = (() => {
   if (location.protocol !== 'file:') {
-    return `${location.protocol}//${location.hostname}:${AQUAGO_PORT}`;
+    // Agar capacitor localhost bo'lsa
+    if (location.hostname === 'localhost' && !location.port) {
+      return `https://web-production-3f789.up.railway.app`;
+    }
+    return location.origin;
   }
   return null; // will be resolved async
 })();
@@ -26,6 +30,7 @@ async function _detectServer() {
 
   // Try localhost first, then common LAN IPs
   const candidates = [
+    `https://web-production-3f789.up.railway.app`,
     `http://localhost:${AQUAGO_PORT}`,
     `http://127.0.0.1:${AQUAGO_PORT}`,
   ];
