@@ -1,0 +1,130 @@
+/* ===================================================
+   AquaGo – Custom Electron Title Bar
+   =================================================== */
+
+.titlebar {
+    display: none;
+    /* Faqat Electron da ko'rinadi */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    background: rgba(10, 20, 40, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-app-region: drag;
+    z-index: 99999;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px 0 12px;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.titlebar-drag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    -webkit-app-region: drag;
+}
+
+.titlebar-icon {
+    font-size: 16px;
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+}
+
+.titlebar-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #bae6fd;
+    letter-spacing: 0.5px;
+}
+
+.titlebar-controls {
+    display: flex;
+    gap: 2px;
+    -webkit-app-region: no-drag;
+}
+
+.tb-btn {
+    width: 28px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-app-region: no-drag;
+}
+
+.tb-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.tb-btn.close:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.tb-btn.minimize:hover {
+    background: #f39c12;
+    color: #fff;
+}
+
+.tb-btn.maximize:hover {
+    background: #27ae60;
+    color: #fff;
+}
+
+/* Electron da body ni pastga siljitish */
+body.is-electron {
+    padding-top: 36px !important;
+}
+
+body.is-electron .titlebar {
+    display: flex !important;
+}
+
+/* Navbar ni titlebar ostiga surish */
+body.is-electron .top-nav {
+    top: 36px !important;
+}
+
+/* Driver dashboard qisqarishi */
+body.is-electron .driver-dashboard {
+    margin-top: 100px !important;
+    height: calc(100vh - 100px) !important;
+}
+
+/* PDU notification pastroqdan chiqishi */
+body.is-electron .notif-popup {
+    top: 116px !important;
+}
+
+/* User screen larni pastroqqa tushirish */
+body.is-electron .main-screen,
+body.is-electron .order-pending-screen,
+body.is-electron .driver-arriving-screen {
+    padding-top: 120px !important;
+}
+
+/* Hide download section inside the app (Electron) */
+body.is-electron #downloadsSection {
+    display: none !important;
+}
+
+/* Hide download section inside the app (Mobile PWA) */
+@media all and (display-mode: standalone) {
+    #downloadsSection {
+        display: none !important;
+    }
+}

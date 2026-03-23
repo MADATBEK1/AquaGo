@@ -1,0 +1,1044 @@
+/* ===================================================
+   AquaGo – User Dashboard Styles
+   =================================================== */
+
+.main-screen,
+.order-pending-screen,
+.driver-arriving-screen {
+    padding-top: 64px;
+    min-height: 100vh;
+}
+
+.main-screen {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 84px 20px 40px;
+}
+
+
+/* ---- Greeting ---- */
+.greeting-section {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.greeting-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.greeting-sub {
+    color: var(--text-secondary);
+    margin-top: 6px;
+    font-size: 0.95rem;
+}
+
+/* ---- Stats ---- */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(14, 165, 233, 0.3);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 1.6rem;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ---- Water Button ---- */
+.water-btn-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0 44px;
+}
+
+.water-ripple {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(14, 165, 233, 0.3);
+    animation: rippleOut 2.5s ease-out infinite;
+}
+
+.r1 {
+    width: 220px;
+    height: 220px;
+    animation-delay: 0s;
+}
+
+.r2 {
+    width: 280px;
+    height: 280px;
+    animation-delay: 0.6s;
+}
+
+.r3 {
+    width: 340px;
+    height: 340px;
+    animation-delay: 1.2s;
+}
+
+@keyframes rippleOut {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+
+.water-mega-btn {
+    position: relative;
+    z-index: 1;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #0ea5e9, #0284c7, #0369a1);
+    border: 4px solid rgba(56, 189, 248, 0.5);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow:
+        0 0 0 0 rgba(14, 165, 233, 0),
+        0 20px 60px rgba(14, 165, 233, 0.5),
+        inset 0 -6px 20px rgba(0, 0, 0, 0.3),
+        inset 0 6px 20px rgba(56, 189, 248, 0.3);
+}
+
+.water-mega-btn:hover {
+    transform: scale(1.06);
+    box-shadow:
+        0 0 0 15px rgba(14, 165, 233, 0.1),
+        0 30px 80px rgba(14, 165, 233, 0.6),
+        inset 0 -6px 20px rgba(0, 0, 0, 0.3),
+        inset 0 6px 20px rgba(56, 189, 248, 0.4);
+}
+
+.water-mega-btn:active {
+    transform: scale(0.96);
+}
+
+.water-mega-btn.loading {
+    animation: waterPulse 1s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes waterPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.5), 0 20px 60px rgba(14, 165, 233, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 0 20px rgba(14, 165, 233, 0.1), 0 30px 80px rgba(14, 165, 233, 0.7);
+    }
+}
+
+.water-btn-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.water-drop-icon {
+    font-size: 3.5rem;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+    animation: dropBounce 2s ease-in-out infinite;
+}
+
+@keyframes dropBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.water-btn-text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.water-btn-sub {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.75);
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* ---- Orders Section ---- */
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.empty-orders {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+}
+
+.order-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.order-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.order-status-icon {
+    font-size: 1.4rem;
+}
+
+.order-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.order-status-badge {
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.badge-done {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.badge-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning);
+}
+
+.badge-cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+/* ---- Pending Screen ---- */
+.order-pending-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 84px 20px 40px;
+}
+
+.pending-content {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.pending-animation {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ping-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(14, 165, 233, 0.4);
+    animation: pingOut 2s ease-out infinite;
+}
+
+.c1 {
+    width: 60px;
+    height: 60px;
+    animation-delay: 0s;
+}
+
+.c2 {
+    width: 90px;
+    height: 90px;
+    animation-delay: 0.5s;
+}
+
+.c3 {
+    width: 120px;
+    height: 120px;
+    animation-delay: 1s;
+}
+
+@keyframes pingOut {
+    0% {
+        transform: scale(0.5);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.pending-icon {
+    font-size: 3rem;
+    position: relative;
+    z-index: 1;
+    animation: floatBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes floatBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.pending-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.pending-sub {
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.pending-timer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.timer-num {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.mini-map-wrapper {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+}
+
+.mini-map {
+    width: 100%;
+    height: 220px;
+}
+
+.map-label {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 15, 30, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.cancel-order-btn {
+    padding: 13px 28px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1.5px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--danger);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+}
+
+.cancel-order-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* ---- Arriving Screen ---- */
+.driver-arriving-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 84px 20px 40px;
+}
+
+.arriving-content {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.arriving-header {
+    text-align: center;
+}
+
+.arriving-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 50px;
+    color: var(--success);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.arriving-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.driver-name-display {
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.full-map-wrapper {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.full-map {
+    width: 100%;
+    height: 320px;
+}
+
+.eta-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.eta-icon {
+    font-size: 2rem;
+}
+
+.eta-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.eta-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.eta-time {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.done-btn {
+    padding: 16px;
+    width: 100%;
+    background: linear-gradient(135deg, var(--success), #16a34a);
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.done-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(34, 197, 94, 0.5);
+}
+
+/* Location Dialog */
+.location-dialog {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 20px;
+}
+
+.location-dialog-inner {
+    background: rgba(15, 23, 42, 0.98);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loc-icon {
+    font-size: 3rem;
+}
+
+.location-dialog-inner h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.location-dialog-inner p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.loc-allow-btn {
+    padding: 13px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: var(--transition);
+}
+
+.loc-allow-btn:hover {
+    transform: translateY(-2px);
+}
+
+.loc-deny-btn {
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.loc-deny-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* =============================================
+   CHAT PANEL
+   ============================================= */
+.chat-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 8000;
+    background: rgba(10, 15, 30, 0.98);
+    backdrop-filter: blur(20px);
+    border-top: 2px solid rgba(14, 165, 233, 0.5);
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 60vh;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    font-weight: 700;
+    color: #38bdf8;
+    font-size: 0.95rem;
+}
+
+.chat-close-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chat-empty {
+    text-align: center;
+    color: #475569;
+    font-size: 0.88rem;
+    padding: 20px;
+}
+
+.chat-msg {
+    display: flex;
+}
+
+.chat-msg.mine {
+    justify-content: flex-end;
+}
+
+.chat-msg.theirs {
+    justify-content: flex-start;
+}
+
+.chat-bubble {
+    max-width: 75%;
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.chat-msg.mine .chat-bubble {
+    background: #0ea5e9;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-msg.theirs .chat-bubble {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-bubble p {
+    margin: 0;
+}
+
+.chat-sender {
+    display: block;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.chat-time {
+    display: block;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 3px;
+    text-align: right;
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.chat-input:focus {
+    border-color: #0ea5e9;
+}
+
+.chat-send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #0ea5e9;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, background 0.2s;
+}
+
+.chat-send-btn:hover {
+    background: #0284c7;
+    transform: scale(1.05);
+}
+
+/* =============================================
+   RATING STARS
+   ============================================= */
+.star-btn {
+    font-size: 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s;
+    line-height: 1;
+    padding: 4px;
+}
+
+.star-btn:hover,
+.star-btn.active {
+    transform: scale(1.2);
+}
+
+/* =============================================
+   RESPONSIVE – Mobile (max 600px)
+   ============================================= */
+@media (max-width: 600px) {
+    .main-screen {
+        padding: 74px 14px 30px;
+    }
+
+
+    .order-pending-screen,
+    .driver-arriving-screen {
+        padding: 74px 14px 30px;
+    }
+
+    /* --- Greeting --- */
+    .greeting-section {
+        margin-bottom: 18px;
+    }
+
+    .greeting-text {
+        font-size: 1.4rem;
+    }
+
+    .greeting-sub {
+        font-size: 0.85rem;
+    }
+
+    /* --- Stats --- */
+    .stats-row {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+
+    .stat-card {
+        padding: 10px 8px;
+        gap: 6px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .stat-icon {
+        font-size: 1.3rem;
+    }
+
+    .stat-num {
+        font-size: 1.2rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+
+    /* --- Water Button --- */
+    .water-btn-container {
+        margin: 10px 0 32px;
+    }
+
+    .water-mega-btn {
+        width: 165px;
+        height: 165px;
+    }
+
+    .r1 {
+        width: 180px;
+        height: 180px;
+    }
+
+    .r2 {
+        width: 235px;
+        height: 235px;
+    }
+
+    .r3 {
+        width: 290px;
+        height: 290px;
+    }
+
+    .water-drop-icon {
+        font-size: 2.8rem;
+    }
+
+    .water-btn-text {
+        font-size: 0.9rem;
+    }
+
+    .water-btn-sub {
+        font-size: 0.65rem;
+    }
+
+    /* --- Orders section --- */
+    .orders-section {
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+    }
+
+    .order-item {
+        padding: 10px 12px;
+    }
+
+    /* --- Pending screen --- */
+    .pending-title {
+        font-size: 1.3rem;
+    }
+
+    .mini-map {
+        height: 180px;
+    }
+
+    /* --- Arriving screen --- */
+    .arriving-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .full-map {
+        height: 240px;
+    }
+
+    .eta-card {
+        padding: 12px 16px;
+    }
+
+    .done-btn {
+        padding: 13px;
+        font-size: 0.95rem;
+    }
+
+    /* --- Dialog --- */
+    .location-dialog-inner {
+        padding: 22px 18px;
+    }
+}
+
+/* =============================================
+   RESPONSIVE – Small phones (max 390px)
+   iPhone 8 (375px), iPhone SE, etc.
+   ============================================= */
+@media (max-width: 390px) {
+    .main-screen {
+        padding: 70px 12px 24px;
+    }
+
+    .greeting-text {
+        font-size: 1.25rem;
+    }
+
+    .stats-row {
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .stat-card {
+        padding: 8px 6px;
+    }
+
+    .stat-num {
+        font-size: 1.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.60rem;
+    }
+
+    .water-btn-container {
+        margin: 8px 0 24px;
+    }
+
+    .water-mega-btn {
+        width: 150px;
+        height: 150px;
+    }
+
+    .r1 {
+        width: 165px;
+        height: 165px;
+    }
+
+    .r2 {
+        width: 215px;
+        height: 215px;
+    }
+
+    .r3 {
+        width: 265px;
+        height: 265px;
+    }
+
+    .water-drop-icon {
+        font-size: 2.5rem;
+    }
+
+    .water-btn-text {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    .water-btn-sub {
+        font-size: 0.60rem;
+    }
+
+    .full-map {
+        height: 200px;
+    }
+
+    .mini-map {
+        height: 150px;
+    }
+
+    .done-btn {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    .cancel-order-btn {
+        padding: 11px;
+        font-size: 0.88rem;
+    }
+
+    .location-dialog-inner {
+        padding: 18px 14px;
+    }
+}

@@ -1,0 +1,70 @@
+{
+  "name": "aquago",
+  "version": "1.0.0",
+  "description": "AquaGo – Suv yetkazib berish ilovasi",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "node server.js",
+    "electron": "node_modules\\electron\\dist\\electron.exe .",
+    "electron:build": "node node_modules\\electron-builder\\cli.js --win --x64",
+    "cap:init": "node node_modules\\@capacitor\\cli\\bin\\capacitor init AquaGo uz.aquago.app --web-dir .",
+    "cap:add": "node node_modules\\@capacitor\\cli\\bin\\capacitor add android",
+    "cap:sync": "node node_modules\\@capacitor\\cli\\bin\\capacitor sync",
+    "cap:android": "node node_modules\\@capacitor\\cli\\bin\\capacitor open android"
+  },
+  "keywords": [
+    "aquago",
+    "water",
+    "delivery"
+  ],
+  "author": "AquaGo Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "uz.aquago.app",
+    "productName": "AquaGo",
+    "copyright": "Copyright 2024 AquaGo",
+    "directories": {
+      "output": "dist-app"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AquaGo",
+      "warningsAsErrors": false
+    },
+    "files": [
+      "electron/**/*",
+      "index.html",
+      "user.html",
+      "driver.html",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*"
+    ]
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "selfsigned": "^5.5.0"
+  }
+}

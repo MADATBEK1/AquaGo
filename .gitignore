@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-app
+dist-electron
+.netlify
+.env
+.db_*.json
+AquaGo_Setup.exe
+*.msi

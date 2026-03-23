@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>AquaGo – Suv Yetkazib Berish | O'zbekiston</title>
+    <meta name="description"
+        content="AquaGo – O'zbekistonda tez va qulay suv yetkazib berish xizmati. Bir tugma bosish bilan suvchi uyingizga keladi. Xorazm, Urganch va boshqa shaharlarda xizmat ko'rsatadi." />
+    <meta name="keywords"
+        content="AquaGo, suv yetkazib berish, water delivery, aquago, suv buyurtma, suvchi, Xorazm, Urganch, O'zbekiston" />
+    <meta name="author" content="AquaGo Team" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://aquago.netlify.app/" />
+
+    <!-- Open Graph (Facebook, Telegram) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aquago.netlify.app/" />
+    <meta property="og:title" content="AquaGo – Suv Yetkazib Berish O'zbekiston" />
+    <meta property="og:description"
+        content="Tez va qulay suv yetkazib berish. Bir tugma bosish bilan suvchi uyingizga keladi!" />
+    <meta property="og:image" content="https://aquago.netlify.app/assets/icon.png" />
+    <meta property="og:locale" content="uz_UZ" />
+    <meta property="og:site_name" content="AquaGo" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AquaGo – Suv Yetkazib Berish" />
+    <meta name="twitter:description" content="O'zbekistonda tez va qulay suv yetkazib berish xizmati." />
+    <meta name="twitter:image" content="https://aquago.netlify.app/assets/icon.png" />
+
+    <!-- PWA & Mobile -->
+    <meta name="theme-color" content="#0ea5e9" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AquaGo" />
+
+    <!-- Structured Data (Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AquaGo",
+      "description": "O'zbekistonda tez va qulay suv yetkazib berish xizmati",
+      "url": "https://aquago.netlify.app",
+      "applicationCategory": "DeliveryApplication",
+      "operatingSystem": "Web, Android, iOS, Windows",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "UZS"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "AquaGo Team"
+      }
+    }
+    </script>
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="assets/icon.png" />
+    <link rel="icon" type="image/png" href="assets/icon.png" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/titlebar.css" />
+</head>
+
+<body class="auth-page">
+
+    <!-- Electron Custom Title Bar -->
+    <div class="titlebar" id="titlebar">
+        <div class="titlebar-drag">
+            <span class="titlebar-icon">💧</span>
+            <span class="titlebar-name">AquaGo</span>
+        </div>
+        <div class="titlebar-controls">
+            <button class="tb-btn minimize" onclick="tbMinimize()" title="Kichraytirish">─</button>
+            <button class="tb-btn maximize" onclick="tbMaximize()" title="Kattalashtirish">□</button>
+            <button class="tb-btn close" onclick="tbClose()" title="Yopish">✕</button>
+        </div>
+    </div>
+
+
+    <!-- Background animated bubbles -->
+    <div class="bg-bubbles">
+        <div class="bubble b1"></div>
+        <div class="bubble b2"></div>
+        <div class="bubble b3"></div>
+        <div class="bubble b4"></div>
+        <div class="bubble b5"></div>
+    </div>
+
+    <!-- Auth Container -->
+    <div class="auth-wrapper">
+
+        <!-- Logo -->
+        <div class="logo-block">
+            <div class="logo-icon">💧</div>
+            <h1 class="logo-title">AquaGo</h1>
+            <p class="logo-subtitle">Suv yetkazib berish platformasi</p>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-selector" id="roleSelector">
+            <button class="role-btn active" id="btnUser" onclick="selectRole('user')">
+                <span class="role-icon">🏠</span>
+                <span>Mijoz</span>
+            </button>
+            <button class="role-btn" id="btnDriver" onclick="selectRole('driver')">
+                <span class="role-icon">🚗</span>
+                <span>Suvchi</span>
+            </button>
+        </div>
+
+        <!-- Tab Switcher -->
+        <div class="tab-switcher">
+            <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Kirish</button>
+            <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Ro'yxatdan o'tish</button>
+        </div>
+
+        <!-- Login Form -->
+        <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="loginPhone">Telefon raqam</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">📱</span>
+                    <input type="text" id="loginPhone" placeholder="+998 90 123 45 67" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Parol</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="loginPassword" placeholder="Parolni kiriting" required />
+                    <button type="button" class="eye-btn" onclick="togglePass('loginPassword', this)">👁️</button>
+                </div>
+            </div>
+            <div class="error-msg" id="loginError"></div>
+            <button type="submit" class="submit-btn" id="loginSubmitBtn">
+                <span>Kirish</span>
+                <div class="btn-loader" id="loginLoader"></div>
+            </button>
+
+            <!-- Demo Credentials -->
+            <div class="demo-section">
+                <div class="demo-label">⚡ Tez kirish (Demo)</div>
+                <div class="demo-btns">
+                    <button type="button" class="demo-btn demo-user" onclick="fillDemo('user')">
+                        🏠 Mijoz bo'lib kir
+                    </button>
+                    <button type="button" class="demo-btn demo-driver" onclick="fillDemo('driver')">
+                        🚗 Suvchi bo'lib kir
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Register Form -->
+        <form class="auth-form hidden" id="registerForm" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label for="regName">Ism Familiya</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="regName" placeholder="Ismingizni kiriting" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="regPhone">Telefon raqam</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">📱</span>
+                    <input type="text" id="regPhone" placeholder="+998 90 123 45 67" required />
+                </div>
+            </div>
+            <div class="form-group" id="vehicleGroup" style="display:none">
+                <label for="regVehicle">Mashina raqami</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🚗</span>
+                    <input type="text" id="regVehicle" placeholder="01 A 123 BC" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Parol</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="regPassword" placeholder="Parol yarating" required />
+                    <button type="button" class="eye-btn" onclick="togglePass('regPassword', this)">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="regPassword2">Parolni tasdiqlang</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="regPassword2" placeholder="Parolni qayta kiriting" required />
+                </div>
+            </div>
+            <div class="error-msg" id="registerError"></div>
+            <button type="submit" class="submit-btn">
+                <span>Ro'yxatdan o'tish</span>
+                <div class="btn-loader" id="registerLoader" style="display:none"></div>
+            </button>
+        </form>
+
+        <div id="downloadsSection"
+            style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="dl-grid">
+                <!-- Windows Download Button -->
+                <a href="/AquaGo_Setup.exe" download="AquaGo_Setup.exe" class="submit-btn"
+                    style="background: linear-gradient(135deg, #10b981, #059669); text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 12px 5px; height: 100%;">
+                    <span style="font-size: 1.4rem;">🖥️</span>
+                    <span style="font-size: 0.85rem; line-height: 1.2;">Windows<br>(.exe)</span>
+                </a>
+
+                <!-- Mobile Install Button -->
+                <button
+                    onclick="alert('📲 Telefonga o\'rnatish uchun:\n\n1. Ushbu saytni telefoningiz (Chrome/Safari) orqali oching.\n2. Brauzer menyusidan \\\`Bosh ekranga qo\'shish\\\` (Add to Home Screen) tugmasini bosing.\n3. Tayyor! Dastur telefoningizga o\'rnatiladi.')"
+                    class="submit-btn" type="button"
+                    style="background: linear-gradient(135deg, #f59e0b, #d97706); text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; margin-top: 0; padding: 12px 5px; height: 100%;">
+                    <span style="font-size: 1.4rem;">📱</span>
+                    <span style="font-size: 0.85rem; line-height: 1.2;">Telefon ilovasi<br>(Android/iOS)</span>
+                </button>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-top: 12px;">Saytni telefondan ochib o'rnating</p>
+        </div>
+
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/titlebar.js"></script>
+    <script>
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => { });
+        }
+    </script>
+</body>
+
+</html>

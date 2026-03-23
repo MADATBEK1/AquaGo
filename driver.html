@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <title>AquaGo – Suvchi Paneli</title>
+    <meta name="description" content="AquaGo suvchi paneli – buyurtmalarni xaritada ko'ring va bajaring" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/driver.css" />
+    <link rel="stylesheet" href="css/titlebar.css" />
+</head>
+
+<body class="driver-page">
+
+    <!-- Electron Custom Title Bar -->
+    <div class="titlebar" id="titlebar">
+        <div class="titlebar-drag">
+            <span class="titlebar-icon">💧</span>
+            <span class="titlebar-name">AquaGo – Suvchi</span>
+        </div>
+        <div class="titlebar-controls">
+            <button class="tb-btn minimize" onclick="tbMinimize()" title="Kichraytirish">─</button>
+            <button class="tb-btn maximize" onclick="tbMaximize()" title="Kattalashtirish">□</button>
+            <button class="tb-btn close" onclick="tbClose()" title="Yopish">✕</button>
+        </div>
+    </div>
+
+    <!-- Top Nav -->
+    <!-- Premium Driver Header -->
+    <header class="premium-header driver-nav">
+        <div class="user-profile-card">
+            <div class="user-avatar-circle">SC</div>
+            <div class="user-info-stack">
+                <strong id="driverNavName" class="user-name-text">Suvchi</strong>
+                <div class="premium-online-status">
+                    <label class="online-switch">
+                        <input type="checkbox" id="onlineToggle" onchange="toggleOnlineStatus(this.checked)" />
+                        <span class="online-slider"></span>
+                    </label>
+                    <span class="online-label" id="onlineLabel">Oflayn</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="premium-icon-btn error-action" onclick="logout()" title="Chiqish">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Driver Dashboard -->
+    <div class="driver-dashboard">
+
+        <!-- Left Panel -->
+        <div class="driver-left-panel">
+
+            <!-- Stats -->
+            <div class="driver-stats">
+                <div class="d-stat-card earnings">
+                    <div class="d-stat-icon">💰</div>
+                    <div class="d-stat-info">
+                        <span class="d-stat-num" id="dTodayEarnings">0</span>
+                        <span class="d-stat-label">Bugungi daromad (so'm)</span>
+                    </div>
+                </div>
+                <div class="d-stat-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="d-stat-card small">
+                        <div class="d-stat-icon">✅</div>
+                        <span class="d-stat-num" id="dCompleted">0</span>
+                        <span class="d-stat-label">Bajarilgan</span>
+                    </div>
+                    <div class="d-stat-card small">
+                        <div class="d-stat-icon">📍</div>
+                        <span class="d-stat-num" id="dPending">0</span>
+                        <span class="d-stat-label">Kutilmoqda</span>
+                    </div>
+                    <div class="d-stat-card small">
+                        <div class="d-stat-icon" style="cursor:pointer;" onclick="refillWater()" title="To'ldirish">💧
+                        </div>
+                        <span class="d-stat-num" id="dWaterStock">40</span>
+                        <span class="d-stat-label">Suv qoldig'i</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Offline Overlay -->
+            <div class="offline-overlay" id="offlineOverlay">
+                <div class="offline-content">
+                    <div class="offline-icon">😴</div>
+                    <h3>Siz oflayn holatdasiz</h3>
+                    <p>Buyurtmalar olish uchun onlayn bo'ling</p>
+                    <button class="go-online-btn" onclick="goOnline()">Onlayn bo'lish</button>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="orders-panel" id="ordersPanel">
+                <div class="orders-panel-header">
+                    <h3>📋 Buyurtmalar</h3>
+                    <div class="new-badge hidden" id="newOrderBadge">YANGI!</div>
+                </div>
+
+                <!-- New Order Alert -->
+                <div class="new-order-alert hidden" id="newOrderAlert">
+                    <div class="alert-header">
+                        <span class="alert-dot"></span>
+                        <span>Yangi buyurtma!</span>
+                    </div>
+                    <div class="alert-body">
+                        <div class="alert-user-info">
+                            <div class="alert-avatar">👤</div>
+                            <div class="alert-details">
+                                <strong id="alertUserName">Mijoz</strong>
+                                <span id="alertUserDist">~0 km</span>
+                            </div>
+                        </div>
+                        <div class="alert-address" id="alertAddress">Manzil aniqlanmoqda...</div>
+                    </div>
+                    <div class="alert-actions">
+                        <button class="accept-btn" id="acceptBtn" onclick="acceptOrder()">✅ Qabul qilish</button>
+                        <button class="reject-btn" onclick="rejectOrder()">❌ Rad etish</button>
+                    </div>
+                    <div class="alert-timer">
+                        <div class="alert-timer-bar" id="alertTimerBar"></div>
+                    </div>
+                </div>
+
+                <!-- Active Order -->
+                <div class="active-order-card hidden" id="activeOrderCard">
+                    <div class="active-order-header">
+                        <span class="active-badge">🔴 FAOL</span>
+                        <span class="active-order-time" id="activeOrderTime">00:00</span>
+                    </div>
+                    <div class="active-order-user">
+                        <div class="active-avatar">👤</div>
+                        <div>
+                            <strong id="activeUserName">Mijoz</strong>
+                            <p id="activeUserPhone">Telefon...</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="complete-delivery-btn" onclick="toggleDriverChat()"
+                            style="background: rgba(14,165,233,0.15); color: #0ea5e9; border: 1px solid rgba(14,165,233,0.3); flex:1;">
+                            💬 Chat
+                        </button>
+                        <button class="complete-delivery-btn" onclick="openNavigator()"
+                            style="background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); flex:1;">
+                            🧭 Navigatsiya
+                        </button>
+                        <button class="complete-delivery-btn" onclick="completeDelivery()" style="flex: 1 1 100%;">
+                            ✅ Yetkazib berdim
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Empty state -->
+                <div class="orders-empty" id="ordersEmpty">
+                    <div class="empty-anim">
+                        <div class="radar-ring rr1"></div>
+                        <div class="radar-ring rr2"></div>
+                        <div class="radar-ring rr3"></div>
+                        <span class="radar-center">📡</span>
+                    </div>
+                    <p>Yangi buyurtmalar kutilmoqda...</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Map -->
+        <div class="driver-map-container">
+            <div id="driverMap" class="driver-map"></div>
+
+            <!-- Map overlay controls -->
+            <div class="map-overlay-top">
+                <div class="my-location-btn" onclick="centerOnMyLocation()" title="Mening joylashuvim">
+                    📍
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="map-legend">
+                <div class="legend-item">
+                    <span class="legend-dot blue"></span>
+                    <span>Buyurtma beruvchi</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot green"></span>
+                    <span>Mening joylashuvim</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Notification popup -->
+    <div class="notif-popup hidden" id="notifPopup">
+        <div class="notif-popup-inner">
+            <div class="notif-popup-icon">🔔</div>
+            <div class="notif-popup-text">
+                <strong id="notifTitle">Yangi buyurtma!</strong>
+                <span id="notifMsg">Mijoz suv buyurdi</span>
+            </div>
+            <button class="notif-close" onclick="closeNotif()">✕</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/driver.js"></script>
+    <script src="js/titlebar.js"></script>
+</body>
+
+</html>

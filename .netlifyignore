@@ -1,0 +1,11 @@
+node_modules/
+dist-app/
+dist-electron/
+.cert.json
+cert.key
+cert.crt
+*.msi
+*.log
+*.blockmap
+builder-debug.yml
+electron/test.js
