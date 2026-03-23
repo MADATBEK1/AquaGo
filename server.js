@@ -10,7 +10,7 @@ const path = require('path');
 const os = require('os');
 
 const ROOT = __dirname;
-const PORT = 7474;
+const PORT = process.env.PORT || 7474;
 
 // ── Persistent DB ────────────────────────────────────────
 const DB_ORDERS = path.join(ROOT, '.db_orders.json');
