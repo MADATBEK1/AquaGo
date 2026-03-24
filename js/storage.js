@@ -13,7 +13,7 @@ const API_BASE = (() => {
   if (location.protocol !== 'file:') {
     // Agar capacitor localhost bo'lsa
     if (location.hostname === 'localhost' && !location.port) {
-      return `https://web-production-3f789.up.railway.app`;
+      return `https://web-production-12311.up.railway.app`;
     }
     return location.origin;
   }
@@ -30,7 +30,7 @@ async function _detectServer() {
 
   // Try localhost first, then common LAN IPs
   const candidates = [
-    `https://web-production-3f789.up.railway.app`,
+    `https://web-production-12311.up.railway.app`,
     `http://localhost:${AQUAGO_PORT}`,
     `http://127.0.0.1:${AQUAGO_PORT}`,
   ];
