@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /api/
 
-Sitemap: https://aquago.netlify.app/sitemap.xml
+Sitemap: https://web-production-12311.up.railway.app/sitemap.xml
