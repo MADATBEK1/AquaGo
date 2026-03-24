@@ -492,7 +492,19 @@ function checkForNewOrders() {
 function handleOrdersUpdate(orders) {
     const pending = orders.filter(o => o.status === 'pending');
     pending.forEach(o => addOrderMarkerToMap(o));
-    if (!isOnline || activeOrderId) return;
+    if (!isOnline || activeOrderId) {
+        // Check if active order got paid
+        if (activeOrderId) {
+            const active = orders.find(o => o.id === activeOrderId);
+            if (active && active.status === 'paid') {
+                // Mijoz to'lov qildi!
+                showToast('💰 PUL TUSHDI! Mijoz to\'lov qildi!', 'success', 8000);
+                showNotifPopup('💰 Pul tushdi!', 'Mijoz to\'lovni tasdiqladi');
+                _finishDeliveryAfterPayment(activeOrderId);
+            }
+        }
+        return;
+    }
     if (pending.length === 0) return;
     const firstOrder = pending[0];
     if (pendingAlertId === firstOrder.id) return;
@@ -607,8 +619,31 @@ function completeDelivery() {
     // Stop navigation first
     if (navActive) stopNavigation();
 
-    DB.updateOrder(activeOrderId, { status: 'done', completedAt: Date.now() });
+    // 'delivered' holatiga o'tkazish — mijoz to'lovini kutish
+    DB.updateOrder(activeOrderId, { status: 'delivered', deliveredAt: Date.now() });
 
+    // Serverga yuborish
+    const base = window._aquagoServer;
+    if (base) {
+        fetch(`${base}/api/orders/${activeOrderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'delivered', deliveredAt: Date.now() })
+        }).catch(() => { });
+    }
+
+    showToast('💧 Suv yetkazildi! Mijoz to\'lov qilishini kuting...', 'info', 6000);
+
+    // Tugma o'chir
+    const completeBtn = document.querySelector('.complete-delivery-btn[onclick="completeDelivery()"]');
+    if (completeBtn) {
+        completeBtn.textContent = '⏳ To\'lov kutilmoqda...';
+        completeBtn.disabled = true;
+        completeBtn.style.opacity = '0.6';
+    }
+}
+
+function _finishDeliveryAfterPayment(ordId) {
     const users = DB.getUsers();
     const idx = users.findIndex(u => u.id === currentDriver.id);
     if (idx !== -1) {
@@ -627,7 +662,7 @@ function completeDelivery() {
         showToast('⚠️ Suv tugadi! Onlayn rejimdan chiqdingiz.', 'warning', 6000);
     }
 
-    removeOrderMarker(activeOrderId);
+    removeOrderMarker(ordId);
     activeOrderId = null;
     clearInterval(activeOrderTimer);
 
@@ -635,7 +670,7 @@ function completeDelivery() {
     document.getElementById('ordersEmpty').classList.remove('hidden');
 
     refreshDriverStats();
-    showToast('🎉 Bajarildi! +15,000 so\'m qo\'shildi', 'success', 5000);
+    showToast('🎉 Bajarildi! Pul tushdi! +15,000 so\'m qo\'shildi 💰', 'success', 6000);
 }
 
 // ============================================================

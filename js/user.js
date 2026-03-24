@@ -81,6 +81,20 @@ function closeOrderModal() {
 }
 
 let orderParams = { quantity: 1 };
+
+// ─── WATER TYPE DESCRIPTION ──────────────────────────────
+const WATER_DESCS = {
+    '19L Kalyonka': '💧 <strong style="color:#38bdf8;">19 Litr Kalyonka</strong> — Eng ko\'p ishlatiladigan hajm. Idish qaytariladi. Narxi: ~12,000 – 15,000 so\'m.',
+    '5L Baklajka': '🧴 <strong style="color:#38bdf8;">5 Litr Baklajka</strong> — Kichik hajm, sayohat yoki ofis uchun qulay. Narxi: ~4,000 – 6,000 so\'m.',
+    'Pompa': '⚙️ <strong style="color:#38bdf8;">Suv pompasi</strong> — Kalyonkaga o\'rnatiladigan elektr nasos. Narxi: ~25,000 – 40,000 so\'m.'
+};
+
+function updateWaterDesc() {
+    const val = document.getElementById('waterType').value;
+    const el = document.getElementById('waterTypeDesc');
+    if (el) el.innerHTML = WATER_DESCS[val] || '';
+}
+
 function changeQuantity(val) {
     orderParams.quantity = Math.max(1, Math.min(20, orderParams.quantity + val));
     document.getElementById('orderQuantity').textContent = orderParams.quantity;
@@ -412,17 +426,101 @@ function cancelOrder() {
 
 function completeOrder() {
     if (!activeOrderId) return;
+    const order = DB.getOrderById(activeOrderId);
     const ordId = activeOrderId;
-    DB.updateOrder(ordId, { status: 'done', completedAt: Date.now() });
-    activeOrderId = null;
-    clearInterval(waitTimerInterval);
-    closeChatPanel();
-    showToast('✅ Suv qabul qilindi! Rahmat!', 'success');
-    if (userMap) { userMap.remove(); userMap = null; }
-    showMain();
-    // Show rating after short delay
-    setTimeout(() => showRatingModal(ordId), 1000);
+
+    // To'lov modal ochish
+    showPaymentModal(order);
 }
+
+// ─── PAYMENT MODAL ────────────────────────────────────────
+function showPaymentModal(order) {
+    if (!order) return;
+    const modal = document.getElementById('paymentModal');
+    if (!modal) return;
+    modal.dataset.orderId = order.id;
+
+    const payType = order.paymentType || 'Naqd';
+    document.getElementById('payMethodName').textContent =
+        payType === 'Click' ? '💳 Click orqali' :
+            payType === 'Payme' ? '📱 Payme orqali' : '💵 Naqd pul';
+
+    const cardSection = document.getElementById('cardSection');
+    const cashSection = document.getElementById('cashSection');
+
+    if (payType === 'Click' || payType === 'Payme') {
+        cardSection.classList.remove('hidden');
+        cashSection.style.display = 'none';
+
+        // Driver karta raqamini topish
+        const allUsers = DB.getUsers();
+        const driver = allUsers.find(u => u.id === order.driverId);
+        const cardNum = driver && driver.cardNumber ? driver.cardNumber : '8600 — — — —';
+        const cardName = driver ? driver.name : 'Suvchi';
+        document.getElementById('driverCardNumber').textContent = cardNum;
+        document.getElementById('driverCardName').textContent = '👤 ' + cardName;
+    } else {
+        cardSection.classList.add('hidden');
+        cashSection.style.display = 'block';
+    }
+
+    // Reset sections
+    document.getElementById('payConfirmSection').classList.remove('hidden');
+    document.getElementById('payDoneSection').classList.add('hidden');
+
+    modal.classList.remove('hidden');
+}
+
+function copyCardNumber() {
+    const num = document.getElementById('driverCardNumber').textContent;
+    navigator.clipboard.writeText(num).then(() => {
+        showToast('📋 Karta raqami nusxalandi!', 'success', 2000);
+    }).catch(() => {
+        showToast('Nusxalash muvaffaqiyatsiz', 'warning');
+    });
+}
+
+async function confirmPayment() {
+    const modal = document.getElementById('paymentModal');
+    const ordId = modal.dataset.orderId || activeOrderId;
+
+    // Order ni 'paid' qil
+    DB.updateOrder(ordId, { status: 'paid', paidAt: Date.now() });
+
+    // Serverga ham yuborish
+    const base = window._aquagoServer;
+    if (base) {
+        await fetch(`${base}/api/orders/${ordId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'paid', paidAt: Date.now() })
+        }).catch(() => { });
+    }
+
+    // Done section ko'rsat
+    document.getElementById('payConfirmSection').classList.add('hidden');
+    document.getElementById('payDoneSection').classList.remove('hidden');
+
+    showToast('✅ To\'lov tasdiqlandi! Suvchiga xabar yuborildi.', 'success', 4000);
+
+    // 2 soniyadan keyin yopib, reyting modal ochish
+    setTimeout(() => {
+        closePaymentModal();
+        const ordIdFinal = ordId;
+        activeOrderId = null;
+        clearInterval(waitTimerInterval);
+        closeChatPanel();
+        if (userMap) { userMap.remove(); userMap = null; }
+        showMain();
+        setTimeout(() => showRatingModal(ordIdFinal), 800);
+    }, 2000);
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('paymentModal');
+    if (modal) modal.classList.add('hidden');
+}
+
 
 // ─── ORDER WATCHER ────────────────────────────────────────
 function startOrderWatcher() {
@@ -458,7 +556,16 @@ function checkOrderStatus() {
             showArrivingScreen(order);
         }
     }
-    if (order.status === 'done') {
+    // Suvchi yetkazib berdi → to'lov modal
+    if (order.status === 'delivered') {
+        const arriving = document.getElementById('arrivingScreen');
+        if (!arriving.classList.contains('hidden')) {
+            showToast('💧 Suvchi suv yetkazib berdi! To\'lovni tasdiqlang.', 'success', 5000);
+            // Arriving screen yashir emas, payment modal ochish
+            showPaymentModal(order);
+        }
+    }
+    if (order.status === 'done' || order.status === 'paid') {
         const arriving = document.getElementById('arrivingScreen');
         if (!arriving.classList.contains('hidden')) {
             completeOrder();

@@ -37,6 +37,7 @@ function fillDemo(type) {
     // Animate button
     const btn = type === 'user'
         ? document.querySelector('.demo-btn.demo-user')
+
         : document.querySelector('.demo-btn.demo-driver');
 
     if (btn) {
@@ -70,9 +71,10 @@ function selectRole(role) {
     document.getElementById('btnDriver').classList.toggle('active', role === 'driver');
 
     const vehicleGroup = document.getElementById('vehicleGroup');
-    if (vehicleGroup) {
-        vehicleGroup.style.display = role === 'driver' ? 'flex' : 'none';
-    }
+    if (vehicleGroup) vehicleGroup.style.display = role === 'driver' ? 'flex' : 'none';
+
+    const cardGroup = document.getElementById('cardGroup');
+    if (cardGroup) cardGroup.style.display = role === 'driver' ? 'flex' : 'none';
 }
 
 // ---- Tab Switching ----
@@ -97,6 +99,8 @@ function switchTab(tab) {
         const vehicleGroup = document.getElementById('vehicleGroup');
         if (vehicleGroup) {
             vehicleGroup.style.display = currentRole === 'driver' ? 'flex' : 'none';
+            const cardGroup = document.getElementById('cardGroup');
+            if (cardGroup) cardGroup.style.display = currentRole === 'driver' ? 'flex' : 'none';
         }
     }
 
@@ -214,6 +218,7 @@ function handleRegister(e) {
             phone,
             password,
             vehicle: vehicle || null,
+            cardNumber: document.getElementById('regCard') ? document.getElementById('regCard').value.trim() || null : null,
             role: currentRole,
             createdAt: Date.now(),
             todayEarnings: 0,

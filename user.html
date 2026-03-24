@@ -201,6 +201,75 @@
         </div>
     </div>
 
+    <!-- ═══ PAYMENT MODAL ═══ -->
+    <div class="location-dialog hidden" id="paymentModal">
+        <div class="location-dialog-inner" style="max-width:380px;">
+            <div style="font-size:2.5rem; margin-bottom:8px;">💳</div>
+            <h3 style="margin-bottom:4px;">To'lov usuli</h3>
+            <p style="color:#64748b; font-size:0.85rem; margin-bottom:18px;">Suvchi qaysi usul bilan to'lash kerakligini
+                biladi</p>
+
+            <div id="paymentMethodDisplay" style="
+                background: rgba(14,165,233,0.08);
+                border: 1px solid rgba(14,165,233,0.25);
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 16px;
+                text-align: center;
+            ">
+                <div style="color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">To'lov turi:</div>
+                <div id="payMethodName" style="font-size:1.1rem; font-weight:700; color:#e2e8f0; margin-bottom:12px;">
+                    Naqd pul</div>
+
+                <div id="cardSection" class="hidden" style="
+                    background: linear-gradient(135deg, #1e293b, #0f172a);
+                    border: 1px solid rgba(99,102,241,0.3);
+                    border-radius: 10px;
+                    padding: 14px;
+                    margin-bottom: 12px;
+                ">
+                    <div style="color:#94a3b8; font-size:0.75rem; margin-bottom:4px;">Suvchining karta raqami:</div>
+                    <div id="driverCardNumber" style="
+                        font-size: 1.3rem;
+                        font-weight: 800;
+                        color: #818cf8;
+                        letter-spacing: 3px;
+                        font-family: monospace;
+                        margin-bottom: 8px;
+                    ">—</div>
+                    <div id="driverCardName" style="color:#64748b; font-size:0.8rem;">Suvchi ismi</div>
+                    <button onclick="copyCardNumber()" style="
+                        margin-top: 10px;
+                        padding: 7px 18px;
+                        background: rgba(99,102,241,0.2);
+                        border: 1px solid rgba(99,102,241,0.4);
+                        border-radius: 8px;
+                        color: #818cf8;
+                        font-size: 0.82rem;
+                        cursor: pointer;
+                        font-family: 'Outfit';
+                    ">📋 Nusxalash</button>
+                </div>
+
+                <div id="cashSection" style="color:#22c55e; font-size:0.9rem;">
+                    💵 Suvchiga naqd pul bering
+                </div>
+            </div>
+
+            <div id="payConfirmSection">
+                <button class="loc-allow-btn" onclick="confirmPayment()"
+                    style="background: linear-gradient(135deg,#22c55e,#16a34a);">✅ To'ladim – Tasdiqlash</button>
+                <button class="loc-deny-btn" onclick="closePaymentModal()">Keyinroq</button>
+            </div>
+            <div id="payDoneSection" class="hidden" style="text-align:center; padding:10px;">
+                <div style="font-size:3rem; margin-bottom:8px;">🎉</div>
+                <div style="color:#22c55e; font-weight:700; font-size:1.1rem;">Pul to'landi!</div>
+                <div style="color:#64748b; font-size:0.85rem; margin-top:4px;">Suvchiga bildiruv yuborildi</div>
+                <button class="loc-allow-btn" onclick="closePaymentModal()" style="margin-top:16px;">Yopish</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ RATING MODAL ═══ -->
     <div class="location-dialog hidden" id="ratingModal">
         <div class="location-dialog-inner" style="max-width:360px;">
@@ -229,12 +298,23 @@
 
             <div style="text-align: left; margin: 15px 0;">
                 <label style="color: #94a3b8; font-size: 0.85rem;">Suv turi:</label>
-                <select id="waterType"
-                    style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; font-family: 'Outfit';">
+                <select id="waterType" onchange="updateWaterDesc()"
+                    style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; font-family: 'Outfit';">
                     <option value="19L Kalyonka" style="background:#0f172a; color:white;">19 Litr (Kalyonka)</option>
                     <option value="5L Baklajka" style="background:#0f172a; color:white;">5 Litr (Baklajka)</option>
                     <option value="Pompa" style="background:#0f172a; color:white;">Suv pompasi</option>
                 </select>
+                <div id="waterTypeDesc" style="
+                    background: rgba(14,165,233,0.08);
+                    border: 1px solid rgba(14,165,233,0.2);
+                    border-radius: 8px;
+                    padding: 10px 12px;
+                    margin-bottom: 15px;
+                    font-size: 0.82rem;
+                    color: #94a3b8;
+                    line-height: 1.5;
+                ">💧 <strong style='color:#38bdf8;'>19 Litr Kalyonka</strong> — Eng ko'p ishlatiladigan hajm. Idish
+                    qaytariladi. Narxi: ~12,000 – 15,000 so'm.</div>
 
                 <label style="color: #94a3b8; font-size: 0.85rem;">Soni:</label>
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
