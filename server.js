@@ -65,7 +65,7 @@ const handler = (req, res) => {
 
     // ── DRIVER LOCATION (lightweight POST, no SSE overhead) ─────
     if (url === '/api/driver-location' && mtd === 'POST') {
-        readBody(req).then(({ driverId, lat, lng, heading }) => {
+        body(req).then(({ driverId, lat, lng, heading }) => {
             if (driverId) {
                 driverLocs[driverId] = { lat, lng, heading, ts: Date.now() };
                 push('driver-location', { driverId, lat, lng, heading });
@@ -91,7 +91,7 @@ const handler = (req, res) => {
             return;
         }
         if (mtd === 'POST') {
-            readBody(req).then(msg => {
+            body(req).then(msg => {
                 msg.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
                 msg.ts = Date.now();
                 dbMessages.push(msg);
@@ -106,7 +106,7 @@ const handler = (req, res) => {
 
     // ── RATINGS ──────────────────────────────────────────────────
     if (url === '/api/ratings' && mtd === 'POST') {
-        readBody(req).then(rating => {
+        body(req).then(rating => {
             // Save rating to order
             const i = dbOrders.findIndex(o => o.id === rating.orderId);
             if (i >= 0) { dbOrders[i].rating = rating; save(); push('orders', dbOrders); }
