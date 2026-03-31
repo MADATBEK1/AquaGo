@@ -33,6 +33,20 @@ function createWindow() {
         mainWindow = null;
     });
 
+    // Ichki havolalarni (landing.html va h.k.) app ichida ochish
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        const parsed = new URL(url);
+        // Agar o'z saytimiz bo'lsa — app ichida ochish
+        if (parsed.hostname === 'aquago-mobile-app.netlify.app' || 
+            parsed.hostname === 'localhost' ||
+            parsed.hostname === 'web-production-12311.up.railway.app') {
+            return; // Ruxsat berish
+        }
+        // Tashqi havolalarni brauzerda ochish
+        event.preventDefault();
+        shell.openExternal(url);
+    });
+
     // Tashqi havolalarni brauzerda ochish
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);

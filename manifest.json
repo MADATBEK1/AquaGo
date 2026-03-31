@@ -1,10 +1,11 @@
 {
-    "name": "AquaGo",
+    "name": "AquaGo – Suv Yetkazib Berish",
     "short_name": "AquaGo",
-    "description": "Suv yetkazib berish platformasi",
+    "description": "O'zbekistonda birinchi raqamli suv yetkazib berish platformasi. Real-time GPS, chat, onlayn to'lov.",
     "start_url": "/index.html",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0f172a",
+    "background_color": "#020917",
     "theme_color": "#0ea5e9",
     "orientation": "portrait",
     "icons": [
@@ -20,9 +21,24 @@
             "type": "image/png"
         }
     ],
+    "shortcuts": [
+        {
+            "name": "Loyiha haqida",
+            "short_name": "Haqida",
+            "url": "/landing.html",
+            "icons": [{ "src": "assets/icon.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Buyurtma berish",
+            "short_name": "Buyurtma",
+            "url": "/index.html",
+            "icons": [{ "src": "assets/icon.png", "sizes": "192x192" }]
+        }
+    ],
     "categories": [
         "utilities",
-        "delivery"
+        "delivery",
+        "lifestyle"
     ],
     "lang": "uz"
 }

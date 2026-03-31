@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    AquaGo – Driver Dashboard Logic  (v3 – Navigation)
    =================================================== */
 
@@ -24,8 +24,8 @@ let navDestination = null;      // { lat, lng }
 let navUpdateTimer = null;      // interval for nav panel refresh
 let lastHeading = 0;            // last known heading (degrees)
 
-const DEFAULT_LAT = 41.5501;
-const DEFAULT_LNG = 60.6333;
+const DEFAULT_LAT = 41.1944;
+const DEFAULT_LNG = 61.3098;
 
 // ============================================================
 // INIT
@@ -723,22 +723,104 @@ function logout() {
 }
 
 // ============================================================
-// TOAST
+// TOAST (ULTRA PREMIUM)
 // ============================================================
 function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    // Haptic feedback (vibro) if supported on mobile
+    if (navigator.vibrate) {
+        navigator.vibrate(type === 'success' ? [30, 50, 30] : type === 'error' ? [50, 100, 50] : 40);
+    }
+
     const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+    const colors = { success: '#10b981', error: '#ef4444', info: '#3b82f6', warning: '#f59e0b' };
+    
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    toast.className = `toast toast-${type}`;
+    
+    // Injecting dynamic styles to make it ultra-premium
+    toast.style.cssText = `
+        position: relative;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 4px solid ${colors[type] || colors.info};
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px ${colors[type]}30;
+        padding: 16px 20px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 320px;
+        max-width: 400px;
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        cursor: pointer;
+    `;
+
     toast.innerHTML = `
-    <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
-    <span class="toast-text">${message}</span>
-    <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
-  `;
+        <div style="font-size: 1.6rem; filter: drop-shadow(0 0 10px ${colors[type]}80); animation: toastIconBounce 0.5s ease-out;">${icons[type] || 'ℹ️'}</div>
+        <div style="flex: 1; min-width: 0;">
+            <div style="color: #f8fafc; font-weight: 600; font-size: 0.95rem; font-family: 'Outfit', sans-serif; line-height: 1.4; word-wrap: break-word;">${message}</div>
+        </div>
+        <button class="toast-close" style="
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; 
+            border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.25s; flex-shrink: 0;
+        " onmouseover="this.style.background='rgba(239,68,68,0.2)'; this.style.color='#f8fafc'; this.style.transform='rotate(90deg) scale(1.1)'" 
+           onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#cbd5e1'; this.style.transform='rotate(0deg) scale(1)'"
+           onclick="event.stopPropagation(); this.closest('.toast').removeToast()">✕</button>
+        <div style="
+            position: absolute; bottom: 0; left: 0; height: 4px; 
+            background: linear-gradient(90deg, transparent, ${colors[type]}, ${colors[type]}, transparent); width: 100%;
+            box-shadow: 0 0 12px ${colors[type]};
+            animation: toastProgressAnim ${duration}ms linear forwards;
+        "></div>
+    `;
+
+    // Ensure CSS animations exist globally
+    if (!document.getElementById('toastMegaAnim')) {
+        const style = document.createElement('style');
+        style.id = 'toastMegaAnim';
+        style.textContent = `
+            @keyframes toastProgressAnim { from { width: 100%; } to { width: 0%; } }
+            @keyframes toastIconBounce { 0% { transform: scale(0) rotate(-15deg); } 60% { transform: scale(1.2) rotate(10deg); } 100% { transform: scale(1) rotate(0); } }
+        `;
+        document.head.appendChild(style);
+    }
+
     container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.add('removing');
-        setTimeout(() => toast.remove(), 300);
+    
+    // Entry animation next frame
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateX(0) scale(1)';
+        toast.style.opacity = '1';
+    });
+
+    let timeoutId;
+    
+    // Custom remove function attached to element
+    toast.removeToast = () => {
+        toast.style.transform = 'translateX(100px) scale(0.9) translateY(-10px)';
+        toast.style.opacity = '0';
+        toast.style.pointerEvents = 'none';
+        clearTimeout(timeoutId);
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 500);
+    };
+
+    // Tap anywhere on toast to swipe away / close
+    toast.onclick = () => toast.removeToast();
+
+    // Auto removal
+    timeoutId = setTimeout(() => {
+        toast.removeToast();
     }, duration);
 }
 

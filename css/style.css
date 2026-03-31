@@ -844,11 +844,11 @@ body {
     gap: 8px;
   }
 
-  .user-chip span:not(.user-avatar) {
+  .auth-page .user-chip span:not(.user-avatar) {
     display: none;
   }
 
-  .user-chip {
+  .auth-page .user-chip {
     padding: 4px 6px;
     background: transparent;
     border: none;

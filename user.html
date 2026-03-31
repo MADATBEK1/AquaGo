@@ -7,7 +7,7 @@
     <title>AquaGo – Mijoz</title>
     <meta name="description" content="AquaGo mijoz paneli – suv buyurish" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/style.css" />
@@ -30,15 +30,31 @@
         </div>
     </div>
 
+    <!-- Animated Particles Background -->
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
     <!-- Top Nav -->
     <nav class="top-nav">
         <div class="nav-left">
-            <div class="logo-small">💧 <span>AquaGo</span></div>
+            <div class="logo-small">
+                <span class="logo-drop-anim">💧</span>
+                <span>AquaGo</span>
+            </div>
+        </div>
+        <div class="nav-center">
+            <div class="live-clock" id="liveClock">
+                <span class="clock-icon">🕐</span>
+                <span class="clock-time" id="clockTime">--:--</span>
+                <span class="clock-date" id="clockDate">--</span>
+            </div>
         </div>
         <div class="nav-right">
             <div class="user-chip" id="userChip">
-                <span class="user-avatar">👤</span>
+                <div class="user-avatar-glow">
+                    <span class="user-avatar-letter" id="navAvatarLetter">U</span>
+                </div>
                 <span id="navUserName">Yuklanyapti...</span>
+                <span class="vip-badge">⭐ VIP</span>
             </div>
             <button class="logout-btn" onclick="logout()" title="Chiqish">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -52,38 +68,69 @@
 
     <!-- Main Screen (default) -->
     <div class="main-screen" id="mainScreen">
+
+        <!-- Premium Greeting -->
         <div class="greeting-section">
-            <h2 class="greeting-text" id="greetingText">Assalomu alaykum!</h2>
+            <div class="greeting-badge">
+                <span class="gb-dot"></span>
+                <span>Online</span>
+            </div>
+            <h2 class="greeting-text" id="greetingText">Assalomu alaykum! 👋</h2>
             <p class="greeting-sub">Suv kerakmi? Bir tugma bosing – suvchi keladi!</p>
+            <div class="greeting-location" id="greetingLocation">
+                <span class="loc-pulse"></span>
+                <span id="locationText">📍 Joylashuv aniqlanmoqda...</span>
+            </div>
         </div>
 
-        <!-- Stats row -->
+        <!-- Premium Stats row -->
         <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-icon">📦</div>
+            <div class="stat-card stat-total">
+                <div class="stat-card-glow"></div>
+                <div class="stat-icon-wrap">
+                    <span class="stat-icon-bg">📦</span>
+                </div>
                 <div class="stat-info">
-                    <span class="stat-num" id="totalOrders">0</span>
+                    <span class="stat-num" id="totalOrders" data-target="0">0</span>
                     <span class="stat-label">Jami buyurtmalar</span>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-info">
-                    <span class="stat-num" id="completedOrders">0</span>
-                    <span class="stat-label">Bajarilgan</span>
+                <div class="stat-trend">
+                    <span class="trend-icon">📊</span>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">⏳</div>
+            <div class="stat-card stat-done">
+                <div class="stat-card-glow"></div>
+                <div class="stat-icon-wrap">
+                    <span class="stat-icon-bg">✅</span>
+                </div>
                 <div class="stat-info">
-                    <span class="stat-num" id="pendingOrders">0</span>
+                    <span class="stat-num" id="completedOrders" data-target="0">0</span>
+                    <span class="stat-label">Bajarilgan</span>
+                </div>
+                <div class="stat-trend">
+                    <span class="trend-icon">🏆</span>
+                </div>
+            </div>
+            <div class="stat-card stat-pending">
+                <div class="stat-card-glow"></div>
+                <div class="stat-icon-wrap">
+                    <span class="stat-icon-bg">⏳</span>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-num" id="pendingOrders" data-target="0">0</span>
                     <span class="stat-label">Kutilmoqda</span>
+                </div>
+                <div class="stat-trend">
+                    <span class="trend-icon">⚡</span>
                 </div>
             </div>
         </div>
 
-        <!-- Big Water Button -->
+        <!-- Premium Big Water Button -->
         <div class="water-btn-container">
+            <div class="water-orbit o1"></div>
+            <div class="water-orbit o2"></div>
+            <div class="water-orbit o3"></div>
             <div class="water-ripple r1"></div>
             <div class="water-ripple r2"></div>
             <div class="water-ripple r3"></div>
@@ -93,18 +140,55 @@
                     <div class="water-btn-text">SUV KERAK</div>
                     <div class="water-btn-sub">Bosing va suvchi keladi</div>
                 </div>
+                <div class="water-btn-shine"></div>
+            </button>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="qa-btn" onclick="openOrderModal()">
+                <span class="qa-icon">🚰</span>
+                <span class="qa-text">Tez Buyurtma</span>
+            </button>
+            <button class="qa-btn" onclick="showHistoryModal()">
+                <span class="qa-icon">📋</span>
+                <span class="qa-text">Tarix</span>
+            </button>
+            <button class="qa-btn" onclick="showSupportInfo()">
+                <span class="qa-icon">💬</span>
+                <span class="qa-text">Yordam</span>
+            </button>
+            <button class="qa-btn" onclick="showPromoInfo()">
+                <span class="qa-icon">🎁</span>
+                <span class="qa-text">Aksiyalar</span>
             </button>
         </div>
 
         <!-- Recent Orders -->
         <div class="orders-section">
-            <h3 class="section-title">So'nggi buyurtmalar</h3>
+            <div class="section-header">
+                <h3 class="section-title">
+                    <span class="section-icon">📋</span>
+                    So'nggi buyurtmalar
+                </h3>
+                <span class="section-count" id="ordersCount">0</span>
+            </div>
             <div class="orders-list" id="ordersList">
                 <div class="empty-orders">
-                    <div class="empty-icon">📋</div>
+                    <div class="empty-icon-wrap">
+                        <div class="empty-icon">📋</div>
+                    </div>
                     <p>Hozircha buyurtmalar yo'q</p>
+                    <span class="empty-sub">Birinchi buyurtmangizni bering!</span>
                 </div>
             </div>
+        </div>
+
+        <!-- Powered by footer -->
+        <div class="powered-footer">
+            <span>⚡ Powered by</span>
+            <span class="powered-brand">AquaGo</span>
+            <span class="powered-ver">v3.0 Premium</span>
         </div>
     </div>
 
@@ -120,14 +204,17 @@
             <h2 class="pending-title">Suvchi qidirilmoqda...</h2>
             <p class="pending-sub">Joylashuvingiz suvchilarga yuborildi</p>
             <div class="pending-timer">
-                <span>Kutish vaqti:</span>
+                <span class="timer-label">Kutish vaqti:</span>
                 <span class="timer-num" id="waitTimer">00:00</span>
             </div>
 
             <!-- Map in pending screen -->
             <div class="mini-map-wrapper">
                 <div id="pendingMap" class="mini-map"></div>
-                <div class="map-label">Sizning joylashuvingiz</div>
+                <div class="map-label">
+                    <span class="map-label-dot"></span>
+                    Sizning joylashuvingiz
+                </div>
             </div>
 
             <button class="cancel-order-btn" onclick="cancelOrder()">
@@ -151,7 +238,7 @@
             </div>
 
             <!-- Distance + ETA cards -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin: 12px 0;">
+            <div class="eta-grid">
                 <div class="eta-card">
                     <div class="eta-icon">📍</div>
                     <div class="eta-text">
@@ -168,18 +255,17 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                <button class="done-btn" onclick="toggleChat()"
-                    style="background:rgba(14,165,233,0.15);color:#0ea5e9;border:1px solid rgba(14,165,233,0.3);flex:1;">
+            <div class="action-row">
+                <button class="action-btn chat-action" onclick="toggleChat()">
                     💬 Suvchi bilan gaplash
                 </button>
-                <a id="callDriverBtn" href="tel:" class="done-btn"
-                    style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);text-decoration:none;text-align:center;flex:1;">
+                <a id="callDriverBtn" href="tel:" class="action-btn call-action">
                     📞 Qo'ng'iroq
                 </a>
             </div>
 
             <button class="done-btn" onclick="completeOrder()">
+                <span class="done-btn-shine"></span>
                 <span>✅ Suv qabul qilindi</span>
             </button>
         </div>
@@ -203,52 +289,23 @@
 
     <!-- ═══ PAYMENT MODAL ═══ -->
     <div class="location-dialog hidden" id="paymentModal">
-        <div class="location-dialog-inner" style="max-width:380px;">
+        <div class="location-dialog-inner" style="max-width:400px;">
+            <div class="modal-glow-top"></div>
             <div style="font-size:2.5rem; margin-bottom:8px;">💳</div>
             <h3 style="margin-bottom:4px;">To'lov usuli</h3>
             <p style="color:#64748b; font-size:0.85rem; margin-bottom:18px;">Suvchi qaysi usul bilan to'lash kerakligini
                 biladi</p>
 
-            <div id="paymentMethodDisplay" style="
-                background: rgba(14,165,233,0.08);
-                border: 1px solid rgba(14,165,233,0.25);
-                border-radius: 12px;
-                padding: 16px;
-                margin-bottom: 16px;
-                text-align: center;
-            ">
+            <div id="paymentMethodDisplay" class="payment-method-card">
                 <div style="color:#94a3b8; font-size:0.82rem; margin-bottom:6px;">To'lov turi:</div>
                 <div id="payMethodName" style="font-size:1.1rem; font-weight:700; color:#e2e8f0; margin-bottom:12px;">
                     Naqd pul</div>
 
-                <div id="cardSection" class="hidden" style="
-                    background: linear-gradient(135deg, #1e293b, #0f172a);
-                    border: 1px solid rgba(99,102,241,0.3);
-                    border-radius: 10px;
-                    padding: 14px;
-                    margin-bottom: 12px;
-                ">
+                <div id="cardSection" class="hidden card-info-block">
                     <div style="color:#94a3b8; font-size:0.75rem; margin-bottom:4px;">Suvchining karta raqami:</div>
-                    <div id="driverCardNumber" style="
-                        font-size: 1.3rem;
-                        font-weight: 800;
-                        color: #818cf8;
-                        letter-spacing: 3px;
-                        font-family: monospace;
-                        margin-bottom: 8px;
-                    ">—</div>
+                    <div id="driverCardNumber" class="card-number-display">—</div>
                     <div id="driverCardName" style="color:#64748b; font-size:0.8rem;">Suvchi ismi</div>
-                    <button onclick="copyCardNumber()" style="
-                        margin-top: 10px;
-                        padding: 7px 18px;
-                        background: rgba(99,102,241,0.2);
-                        border: 1px solid rgba(99,102,241,0.4);
-                        border-radius: 8px;
-                        color: #818cf8;
-                        font-size: 0.82rem;
-                        cursor: pointer;
-                        font-family: 'Outfit';
-                    ">📋 Nusxalash</button>
+                    <button onclick="copyCardNumber()" class="copy-card-btn">📋 Nusxalash</button>
                 </div>
 
                 <div id="cashSection" style="color:#22c55e; font-size:0.9rem;">
@@ -257,8 +314,7 @@
             </div>
 
             <div id="payConfirmSection">
-                <button class="loc-allow-btn" onclick="confirmPayment()"
-                    style="background: linear-gradient(135deg,#22c55e,#16a34a);">✅ To'ladim – Tasdiqlash</button>
+                <button class="loc-allow-btn green-btn" onclick="confirmPayment()">✅ To'ladim – Tasdiqlash</button>
                 <button class="loc-deny-btn" onclick="closePaymentModal()">Keyinroq</button>
             </div>
             <div id="payDoneSection" class="hidden" style="text-align:center; padding:10px;">
@@ -272,20 +328,19 @@
 
     <!-- ═══ RATING MODAL ═══ -->
     <div class="location-dialog hidden" id="ratingModal">
-        <div class="location-dialog-inner" style="max-width:360px;">
+        <div class="location-dialog-inner" style="max-width:380px;">
+            <div class="modal-glow-top"></div>
             <div style="font-size:3rem; margin-bottom:8px;">⭐</div>
             <h3>Suvchini baholang</h3>
             <p style="color:#64748b; margin-bottom:16px;">Xizmat sifati qanday edi?</p>
-            <div style="display:flex; gap:8px; justify-content:center; margin-bottom:16px;">
+            <div class="stars-row">
                 <button class="star-btn" onclick="renderStars(1)">☆</button>
                 <button class="star-btn" onclick="renderStars(2)">☆</button>
                 <button class="star-btn" onclick="renderStars(3)">☆</button>
                 <button class="star-btn" onclick="renderStars(4)">☆</button>
                 <button class="star-btn" onclick="renderStars(5)">☆</button>
             </div>
-            <textarea id="ratingComment" placeholder="Izoh qoldiring (ixtiyoriy)..." style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);
-                color:white;border:1px solid rgba(255,255,255,0.1);font-family:'Outfit';
-                resize:none;height:70px;margin-bottom:12px;"></textarea>
+            <textarea id="ratingComment" placeholder="Izoh qoldiring (ixtiyoriy)..." class="rating-textarea"></textarea>
             <button class="loc-allow-btn" onclick="submitRating()">✅ Baholash</button>
             <button class="loc-deny-btn" onclick="closeRatingModal()">O'tkazib yuborish</button>
         </div>
@@ -293,48 +348,49 @@
 
     <!-- Order Modal -->
     <div class="location-dialog hidden" id="orderModal">
-        <div class="location-dialog-inner" style="max-width: 400px;">
-            <h3>🛒 Buyurtma tafsilotlari</h3>
-
-            <div style="text-align: left; margin: 15px 0;">
-                <label style="color: #94a3b8; font-size: 0.85rem;">Suv turi:</label>
-                <select id="waterType" onchange="updateWaterDesc()"
-                    style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; font-family: 'Outfit';">
-                    <option value="19L Kalyonka" style="background:#0f172a; color:white;">19 Litr (Kalyonka)</option>
-                    <option value="5L Baklajka" style="background:#0f172a; color:white;">5 Litr (Baklajka)</option>
-                    <option value="Pompa" style="background:#0f172a; color:white;">Suv pompasi</option>
-                </select>
-                <div id="waterTypeDesc" style="
-                    background: rgba(14,165,233,0.08);
-                    border: 1px solid rgba(14,165,233,0.2);
-                    border-radius: 8px;
-                    padding: 10px 12px;
-                    margin-bottom: 15px;
-                    font-size: 0.82rem;
-                    color: #94a3b8;
-                    line-height: 1.5;
-                ">💧 <strong style='color:#38bdf8;'>19 Litr Kalyonka</strong> — Eng ko'p ishlatiladigan hajm. Idish
-                    qaytariladi. Narxi: ~12,000 – 15,000 so'm.</div>
-
-                <label style="color: #94a3b8; font-size: 0.85rem;">Soni:</label>
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                    <button type="button" onclick="changeQuantity(-1)"
-                        style="padding: 5px 15px; border-radius: 5px; background: rgba(255,255,255,0.1); border: none; color: white;">-</button>
-                    <span id="orderQuantity" style="font-size: 1.2rem; font-weight: bold;">1</span>
-                    <button type="button" onclick="changeQuantity(1)"
-                        style="padding: 5px 15px; border-radius: 5px; background: rgba(255,255,255,0.1); border: none; color: white;">+</button>
-                </div>
-
-                <label style="color: #94a3b8; font-size: 0.85rem;">To'lov turi:</label>
-                <select id="paymentType"
-                    style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); font-family: 'Outfit';">
-                    <option value="Naqd" style="background:#0f172a; color:white;">Naqd pul</option>
-                    <option value="Click" style="background:#0f172a; color:white;">Click orqali</option>
-                    <option value="Payme" style="background:#0f172a; color:white;">Payme orqali</option>
-                </select>
+        <div class="location-dialog-inner" style="max-width: 420px;">
+            <div class="modal-glow-top"></div>
+            <div class="order-modal-header">
+                <span class="order-modal-icon">🛒</span>
+                <h3>Buyurtma tafsilotlari</h3>
             </div>
 
-            <button class="loc-allow-btn" onclick="confirmOrder()" id="confirmOrderBtn">Buyurtma berish</button>
+            <div class="order-form">
+                <div class="form-field">
+                    <label>💧 Suv turi:</label>
+                    <select id="waterType" onchange="updateWaterDesc()" class="premium-select">
+                        <option value="19L Kalyonka">19 Litr (Kalyonka)</option>
+                        <option value="5L Baklajka">5 Litr (Baklajka)</option>
+                        <option value="Pompa">Suv pompasi</option>
+                    </select>
+                </div>
+
+                <div id="waterTypeDesc" class="water-desc-card">💧 <strong style='color:#38bdf8;'>19 Litr
+                        Kalyonka</strong> — Eng ko'p ishlatiladigan hajm. Idish
+                    qaytariladi. Narxi: ~12,000 – 15,000 so'm.</div>
+
+                <div class="form-field">
+                    <label>📦 Soni:</label>
+                    <div class="quantity-control">
+                        <button type="button" class="qty-btn" onclick="changeQuantity(-1)">−</button>
+                        <span id="orderQuantity" class="qty-num">1</span>
+                        <button type="button" class="qty-btn" onclick="changeQuantity(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>💳 To'lov turi:</label>
+                    <select id="paymentType" class="premium-select">
+                        <option value="Naqd">Naqd pul</option>
+                        <option value="Click">Click orqali</option>
+                        <option value="Payme">Payme orqali</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="loc-allow-btn order-confirm-btn" onclick="confirmOrder()" id="confirmOrderBtn">
+                🚀 Buyurtma berish
+            </button>
             <button class="loc-deny-btn" onclick="closeOrderModal()">Bekor qilish</button>
         </div>
     </div>
@@ -345,6 +401,7 @@
     <!-- Location Permission Dialog -->
     <div class="location-dialog hidden" id="locationDialog">
         <div class="location-dialog-inner">
+            <div class="modal-glow-top"></div>
             <div class="loc-icon">📍</div>
             <h3>Joylashuv kerak</h3>
             <p>Suvchi sizni topishi uchun joylashuvingizga ruxsat bering</p>
