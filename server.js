@@ -2,12 +2,14 @@
  * AquaGo – Server v3
  * Port: 7474  (IjaraGo: 8080 – to'qnashuv yo'q)
  * HTTP + REST API + Server-Sent Events = real-time cross-device sync
+ * + Tunnel: boshqa tarmoqdan ham kirish imkoniyati
  */
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { spawn } = require('child_process');
 
 const ROOT = __dirname;
 const PORT = process.env.PORT || 7474;
@@ -53,6 +55,9 @@ const body = req => new Promise(ok => {
     req.on('end', () => { try { ok(JSON.parse(b)); } catch { ok({}); } });
 });
 
+// ── Tunnel URL ───────────────────────────────────────────
+let tunnelUrl = null;
+
 // ── Router ───────────────────────────────────────────────
 const handler = (req, res) => {
     const url = req.url.split('?')[0];
@@ -62,6 +67,13 @@ const handler = (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (mtd === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+    // ── TUNNEL URL (client auto-detect) ──────────────────────
+    if (url === '/api/tunnel-url' && mtd === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ url: tunnelUrl }));
+        return;
+    }
 
     // ── DRIVER LOCATION (lightweight POST, no SSE overhead) ─────
     if (url === '/api/driver-location' && mtd === 'POST') {
@@ -208,24 +220,68 @@ function getIP() {
 }
 const IP = getIP();
 
-http.createServer(handler).listen(PORT, '0.0.0.0', () => {
-    const url = `http://${IP}:${PORT}`;
-    console.clear();
-    console.log('\n╔════════════════════════════════════════════════════╗');
-    console.log('║      🌊  AquaGo – Real-time Sync Server           ║');
-    console.log('╠════════════════════════════════════════════════════╣');
-    console.log('║                                                    ║');
-    console.log('║  💻  Kompyuterda (brauzer avtomatik ochiladi)      ║');
-    console.log('║                                                    ║');
-    console.log('║  📱  Telefonda shu manzilni oching:                ║');
-    console.log(`║      ${url.padEnd(48)}║`);
-    console.log('║                                                    ║');
-    console.log('║  ✅  Telefon va kompyuter REAL-TIME ulangan!       ║');
-    console.log('║                                                    ║');
-    console.log('╚════════════════════════════════════════════════════╝\n');
-    // Auto-open browser on computer
+http.createServer(handler).listen(PORT, '0.0.0.0', async () => {
+    const localUrl = `http://${IP}:${PORT}`;
     const { exec } = require('child_process');
+
+    console.clear();
+    console.log('\n╔════════════════════════════════════════════════════════╗');
+    console.log('║         🌊  AquaGo – Real-time Sync Server              ║');
+    console.log('╠════════════════════════════════════════════════════════╣');
+    console.log('║                                                        ║');
+    console.log('║  💻  Kompyuter (brauzer avtomatik ochiladi)             ║');
+    console.log('║                                                        ║');
+    console.log('║  📱  BIR XIL WiFi: Telefonda shu manzilni oching:      ║');
+    console.log(`║      ${localUrl.padEnd(52)}║`);
+    console.log('║                                                        ║');
+    console.log('║  🌐  BOSHQA TARMOQ: Tunnel ochilyapti...               ║');
+    console.log('║                                                        ║');
+    console.log('╚════════════════════════════════════════════════════════╝\n');
+
+    // Auto-open browser on computer
     exec(`start chrome --app=http://localhost:${PORT}`, err => {
         if (err) exec(`start http://localhost:${PORT}`);
     });
+
+    // ── Cloudflare Tunnel: boshqa tarmoqdan kirish ────────────
+    const cfPath = path.join(ROOT, 'cloudflared.exe');
+    if (fs.existsSync(cfPath)) {
+        const cf = spawn(cfPath, ['tunnel', '--url', `http://localhost:${PORT}`], {
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
+
+        let urlFound = false;
+        const parseUrl = (data) => {
+            const text = data.toString();
+            const match = text.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
+            if (match && !urlFound) {
+                urlFound = true;
+                tunnelUrl = match[0];
+                console.log('╔════════════════════════════════════════════════════════════╗');
+                console.log('║  🌐  TUNNEL TAYYOR! Istalgan joydan kiring:               ║');
+                console.log('║                                                            ║');
+                console.log(`║  📱  ${tunnelUrl.padEnd(56)}║`);
+                console.log('║                                                            ║');
+                console.log('║  ☝️  Shu manzilni telefonning brauzeriga yozing!           ║');
+                console.log('║      WiFi bir xil bo\'lmasa ham ishlaydi! ✅                ║');
+                console.log('║      TO\'G\'RIDAN-TO\'G\'RI ochiladi! 🎉                     ║');
+                console.log('║                                                            ║');
+                console.log('╚════════════════════════════════════════════════════════════╝\n');
+            }
+        };
+
+        cf.stdout.on('data', parseUrl);
+        cf.stderr.on('data', parseUrl);
+
+        cf.on('close', (code) => {
+            tunnelUrl = null;
+            console.log('⚠️  Tunnel yopildi (code:', code, '). Server hali ishlayapti (lokal).');
+        });
+
+        // Server yopilganda tunnel ham yopilsin
+        process.on('exit', () => { try { cf.kill(); } catch {} });
+        process.on('SIGINT', () => { try { cf.kill(); } catch {} process.exit(); });
+    } else {
+        console.log('⚠️  cloudflared.exe topilmadi. Faqat lokal tarmoqda ishlaydi.');
+    }
 });

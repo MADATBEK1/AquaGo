@@ -39,14 +39,37 @@ async function _detectServer() {
   const savedIP = localStorage.getItem('aquago_server_ip');
   if (savedIP) candidates.unshift(`http://${savedIP}:${AQUAGO_PORT}`);
 
+  // Saqlangan tunnel URL ni sinash
+  const savedTunnel = localStorage.getItem('aquago_tunnel_url');
+  if (savedTunnel) candidates.unshift(savedTunnel);
+
   for (const base of candidates) {
     const ok = await _testAndConnect(base);
     if (ok) {
       localStorage.setItem('aquago_server_ip', new URL(base).hostname);
+      // Agar lokal serverga ulangan bo'lsa, tunnel URL ni so'rash
+      if (base.includes('localhost') || base.includes('127.0.0.1') || base.includes('192.168')) {
+        _fetchAndSaveTunnelUrl(base);
+      }
       break;
     }
   }
 }
+
+// ── Tunnel URL ni serverdan olish va saqlash ──────────────
+async function _fetchAndSaveTunnelUrl(base) {
+  try {
+    const r = await fetch(base + '/api/tunnel-url');
+    if (r.ok) {
+      const data = await r.json();
+      if (data.url) {
+        localStorage.setItem('aquago_tunnel_url', data.url);
+        console.log('[AquaGo] Tunnel URL saqlandi:', data.url);
+      }
+    }
+  } catch { }
+}
+
 
 async function _testAndConnect(base) {
   try {
