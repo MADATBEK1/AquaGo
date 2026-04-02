@@ -63,6 +63,59 @@
         <!-- Left Panel -->
         <div class="driver-left-panel">
 
+            <!-- Driver Insights Grid -->
+            <div class="driver-insights" id="driverInsights">
+                <div class="insight-card">
+                    <div class="insight-icon">⚡</div>
+                    <div class="insight-val" id="dAvgTime" style="color:#38bdf8;">—</div>
+                    <div class="insight-label">O'rtacha vaqt (min)</div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-icon">⭐</div>
+                    <div class="insight-val" id="dAvgRating" style="color:#fbbf24;">—</div>
+                    <div class="insight-label">O'rtacha baho</div>
+                </div>
+            </div>
+
+            <!-- Weekly Earnings Chart -->
+            <div class="weekly-chart-card" id="weeklyChartCard">
+                <div class="wc-header">
+                    <span class="wc-title">📈 Haftalik daromad</span>
+                    <span class="wc-total" id="wcWeekTotal">0 so'm</span>
+                </div>
+                <div class="wc-bars" id="wcBars"></div>
+            </div>
+
+            <!-- Driver Rating Widget -->
+            <div class="driver-rating-card" id="driverRatingCard">
+                <div class="dr-score">
+                    <span class="dr-score-num" id="drScoreNum">—</span>
+                    <span class="dr-score-label">Reyting</span>
+                </div>
+                <div class="dr-stars-section">
+                    <div class="dr-stars" id="drStars">⭐⭐⭐⭐⭐</div>
+                    <div class="dr-count" id="drCount">Baholashlar yo'q</div>
+                    <div class="dr-bars" id="drBarsEl"></div>
+                </div>
+            </div>
+
+            <!-- Animated Water Gauge -->
+            <div class="water-gauge-card" id="waterGaugeCard">
+                <div class="wg-header">
+                    <span class="wg-title">💧 Suv zahirasi</span>
+                    <span class="wg-val" id="wgVal">40 / 40</span>
+                </div>
+                <div class="wg-bar-track">
+                    <div class="wg-bar-fill" id="wgFill" style="width:100%;"></div>
+                </div>
+                <div class="wg-labels">
+                    <span class="wg-label">Bo'sh</span>
+                    <span class="wg-label" id="wgPct">100%</span>
+                    <span class="wg-label">To'liq (40)</span>
+                </div>
+                <button class="wg-refill-btn" onclick="refillWater()">💧 Suv to'ldirish (+40)</button>
+            </div>
+
             <!-- Stats -->
             <div class="driver-stats">
                 <div class="d-stat-card earnings">

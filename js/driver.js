@@ -43,7 +43,8 @@ function initDriverDashboard() {
     document.getElementById('driverNavName').textContent = currentDriver.name;
     refreshDriverStats();
     initDriverMap();
-    startGPSWatch();          // 🔴 continuous GPS tracking
+    startGPSWatch();
+    initDriverWidgets();   // ⭐ NEW WIDGETS
 
     pollInterval = setInterval(checkForNewOrders, 1000);
 
@@ -680,7 +681,7 @@ function refreshDriverStats() {
     const myOrders = DB.getOrders().filter(o => o.driverId === currentDriver.id);
     const today = new Date().toDateString();
     const todayDone = myOrders.filter(o =>
-        o.status === 'done' && new Date(o.completedAt || o.createdAt).toDateString() === today
+        (o.status === 'done' || o.status === 'paid') && new Date(o.completedAt || o.createdAt).toDateString() === today
     );
     const pending = DB.getPendingOrders();
 
@@ -690,6 +691,124 @@ function refreshDriverStats() {
 
     const waterStockEl = document.getElementById('dWaterStock');
     if (waterStockEl) waterStockEl.textContent = currentWaterStock;
+
+    // Update new widgets
+    updateWaterGauge();
+    renderWeeklyChart();
+    renderDriverRating();
+    renderInsights(myOrders);
+}
+
+// ============================================================
+// NEW WIDGETS
+// ============================================================
+function initDriverWidgets() {
+    renderWeeklyChart();
+    renderDriverRating();
+    updateWaterGauge();
+    renderInsights(DB.getOrders().filter(o => o.driverId === currentDriver.id));
+}
+
+function renderInsights(myOrders) {
+    const done = myOrders.filter(o => o.status === 'done' || o.status === 'paid');
+    // Average delivery time in minutes
+    const withTime = done.filter(o => o.acceptedAt && o.completedAt);
+    const avgMin = withTime.length
+        ? Math.round(withTime.reduce((s, o) => s + (o.completedAt - o.acceptedAt), 0) / withTime.length / 60000)
+        : null;
+    const avgEl = document.getElementById('dAvgTime');
+    if (avgEl) avgEl.textContent = avgMin !== null ? avgMin : '—';
+
+    // Average star rating
+    const rated = myOrders.filter(o => o.rating && o.rating.stars);
+    const avgRating = rated.length
+        ? (rated.reduce((s, o) => s + o.rating.stars, 0) / rated.length).toFixed(1)
+        : null;
+    const ratEl = document.getElementById('dAvgRating');
+    if (ratEl) ratEl.textContent = avgRating !== null ? avgRating : '—';
+}
+
+function renderWeeklyChart() {
+    const barsEl = document.getElementById('wcBars');
+    const totalEl = document.getElementById('wcWeekTotal');
+    if (!barsEl) return;
+
+    const days = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sha', 'Ya'];
+    const today = new Date();
+    const todayIdx = (today.getDay() + 6) % 7; // Monday=0
+    const allOrders = DB.getOrders().filter(o => o.driverId === currentDriver.id && (o.status === 'done' || o.status === 'paid'));
+
+    // Build earnings per day for this week (Mon–Sun)
+    const weekData = days.map((_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - todayIdx + i);
+        const dayStr = d.toDateString();
+        const dayOrders = allOrders.filter(o => new Date(o.completedAt || o.createdAt).toDateString() === dayStr);
+        return dayOrders.length * 15000;
+    });
+
+    const max = Math.max(...weekData, 15000);
+    const weekTotal = weekData.reduce((a, b) => a + b, 0);
+    if (totalEl) totalEl.textContent = weekTotal.toLocaleString() + ' so\'m';
+
+    barsEl.innerHTML = weekData.map((val, i) => {
+        const pct = Math.max(4, Math.round((val / max) * 100));
+        const isToday = i === todayIdx;
+        const label = val > 0 ? (val >= 1000 ? Math.round(val/1000) + 'k' : val) : '';
+        return `<div class="wc-bar-wrap">
+            <span class="wc-bar-val">${label}</span>
+            <div class="wc-bar${isToday ? ' today' : ''}" style="height:${pct}%;" title="${val.toLocaleString()} so'm"></div>
+            <span class="wc-day${isToday ? ' today-label' : ''}">${days[i]}</span>
+        </div>`;
+    }).join('');
+}
+
+function renderDriverRating() {
+    const scoreEl = document.getElementById('drScoreNum');
+    const starsEl = document.getElementById('drStars');
+    const countEl = document.getElementById('drCount');
+    const barsEl  = document.getElementById('drBarsEl');
+    if (!scoreEl) return;
+
+    const myOrders = DB.getOrders().filter(o => o.driverId === currentDriver.id);
+    const rated = myOrders.filter(o => o.rating && o.rating.stars);
+    if (!rated.length) {
+        scoreEl.textContent = '—'; starsEl.textContent = '☆☆☆☆☆';
+        countEl.textContent = 'Baholashlar yo\'q'; barsEl.innerHTML = '';
+        return;
+    }
+    const avg = rated.reduce((s, o) => s + o.rating.stars, 0) / rated.length;
+    scoreEl.textContent = avg.toFixed(1);
+    // Stars rendering
+    const full = Math.round(avg);
+    starsEl.innerHTML = [1,2,3,4,5].map(n => `<span class="dr-star">${n <= full ? '⭐' : '☆'}</span>`).join('');
+    countEl.textContent = `${rated.length} ta baholash`;
+
+    // Rating distribution bars
+    const dist = [5,4,3,2,1].map(star => ({
+        star, count: rated.filter(o => o.rating.stars === star).length
+    }));
+    barsEl.innerHTML = dist.map(d => {
+        const pct = rated.length ? Math.round((d.count / rated.length) * 100) : 0;
+        return `<div class="dr-bar-row">
+            <span class="dr-bar-label">${d.star}</span>
+            <div class="dr-bar-track"><div class="dr-bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join('');
+}
+
+function updateWaterGauge() {
+    const fill = document.getElementById('wgFill');
+    const val  = document.getElementById('wgVal');
+    const pct  = document.getElementById('wgPct');
+    const MAX  = 40;
+    const percent = Math.round((currentWaterStock / MAX) * 100);
+    if (fill) {
+        fill.style.width = percent + '%';
+        fill.classList.toggle('low', percent < 25);
+    }
+    if (val) val.textContent = `${currentWaterStock} / ${MAX}`;
+    if (pct) pct.textContent = percent + '%';
 }
 
 // ============================================================

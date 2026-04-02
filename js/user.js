@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    AquaGo – User Dashboard Logic  (v3 – ULTRA PREMIUM)
    Particles, Live Clock, Animated Counters, Enhanced UX
    =================================================== */
@@ -148,6 +148,8 @@ window.addEventListener('DOMContentLoaded', () => {
     initLiveClock();
     initUserDashboard();
     startOrderWatcher();
+    // Init weather after a short delay (location may not be set yet)
+    setTimeout(initWeather, 1500);
 });
 
 function initUserDashboard() {
@@ -743,14 +745,176 @@ function getStatusInfo(status) {
 }
 
 // ─── QUICK ACTION HELPERS ─────────────────────────────
-function showHistoryModal() {
-    showToast('📋 Tarix: Jami ' + DB.getUserOrders(currentUser.id).length + ' ta buyurtma', 'info', 3000);
+function showHistoryModal() { openHistoryModal(); }
+function showSupportInfo() { openSupportModal(); }
+function showPromoInfo() { openPromoModal(); }
+
+// ─── HISTORY MODAL ───────────────────────────────────
+let _historyFilter = 'all';
+function openHistoryModal() {
+    _historyFilter = 'all';
+    document.getElementById('historyModal').classList.remove('hidden');
+    renderHistoryList();
+    renderHistoryStats();
+    // reset filter tabs
+    document.querySelectorAll('.hft-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('hft-all').classList.add('active');
 }
-function showSupportInfo() {
-    showToast('💬 Yordam: Telegram @aquago_support', 'info', 4000);
+function closeHistoryModal() {
+    document.getElementById('historyModal').classList.add('hidden');
 }
-function showPromoInfo() {
-    showToast('🎁 5-buyurtmada 1 ta bepul suv!', 'success', 4000);
+function filterHistory(filter) {
+    _historyFilter = filter;
+    document.querySelectorAll('.hft-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`hft-${filter}`).classList.add('active');
+    renderHistoryList();
+}
+function renderHistoryList() {
+    const container = document.getElementById('historyList');
+    if (!container) return;
+    let orders = DB.getUserOrders(currentUser.id);
+    if (_historyFilter === 'done') orders = orders.filter(o => ['done','paid','delivered'].includes(o.status));
+    else if (_historyFilter === 'cancelled') orders = orders.filter(o => o.status === 'cancelled');
+    orders = orders.slice().reverse(); // newest first
+    if (!orders.length) {
+        container.innerHTML = '<div class="history-empty"><div style="font-size:2.5rem;margin-bottom:10px;">📭</div><p>Bu bo\'limda buyurtma yo\'q</p></div>';
+        return;
+    }
+    container.innerHTML = orders.map((o, idx) => {
+        const si = getStatusInfo(o.status);
+        const date = new Date(o.createdAt).toLocaleString('uz-UZ', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        const stars = o.rating ? '⭐'.repeat(o.rating.stars) : '';
+        const price = o.waterType === '19L Kalyonka' ? '~13,000' : o.waterType === '5L Baklajka' ? '~5,000' : '~32,000';
+        return `<div class="history-item" style="animation-delay:${idx * 0.06}s">
+          <div class="hi-left">
+            <div class="hi-num">#${orders.length - idx}</div>
+            <div class="hi-icon">${si.icon}</div>
+            <div class="hi-info">
+              <strong>${o.waterType || 'Suv buyurtmasi'}</strong>
+              <span class="hi-qty">📦 ${o.quantity || 1} ta · 💳 ${o.paymentType || 'Naqd'}</span>
+              <span class="hi-date">${date}</span>
+              ${o.driverName ? `<span class="hi-driver">🚗 ${o.driverName}</span>` : ''}
+              ${stars ? `<span class="hi-stars">${stars}</span>` : ''}
+            </div>
+          </div>
+          <div class="hi-right">
+            <span class="order-status-badge ${si.class}">${si.label}</span>
+            <span class="hi-price">${price} so'm</span>
+          </div>
+        </div>`;
+    }).join('');
+}
+function renderHistoryStats() {
+    const bar = document.getElementById('historyStatsBar');
+    if (!bar) return;
+    const orders = DB.getUserOrders(currentUser.id);
+    const done = orders.filter(o => ['done','paid','delivered'].includes(o.status)).length;
+    const cancelled = orders.filter(o => o.status === 'cancelled').length;
+    const total = orders.length;
+    const spend = done * 13000;
+    bar.innerHTML = `
+      <div class="hsb-item"><span class="hsb-num">${total}</span><span class="hsb-lab">Jami</span></div>
+      <div class="hsb-item hsb-green"><span class="hsb-num">${done}</span><span class="hsb-lab">Bajarildi</span></div>
+      <div class="hsb-item hsb-red"><span class="hsb-num">${cancelled}</span><span class="hsb-lab">Bekor</span></div>
+      <div class="hsb-item hsb-gold"><span class="hsb-num">${spend.toLocaleString()}</span><span class="hsb-lab">Sarflandi (so'm)</span></div>`;
+}
+
+// ─── PROMO MODAL ─────────────────────────────────────
+let _promoInterval = null;
+function openPromoModal() {
+    document.getElementById('promoModal').classList.remove('hidden');
+    spawnFireworks();
+    startPromoCountdown();
+}
+function closePromoModal() {
+    document.getElementById('promoModal').classList.add('hidden');
+    clearInterval(_promoInterval);
+}
+function startPromoCountdown() {
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    clearInterval(_promoInterval);
+    function update() {
+        const diff = Math.max(0, midnight - new Date());
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const fmt = n => String(n).padStart(2, '0');
+        const hEl = document.getElementById('pcHours');
+        const mEl = document.getElementById('pcMins');
+        const sEl = document.getElementById('pcSecs');
+        if (hEl) hEl.textContent = fmt(h);
+        if (mEl) mEl.textContent = fmt(m);
+        if (sEl) sEl.textContent = fmt(s);
+    }
+    update();
+    _promoInterval = setInterval(update, 1000);
+}
+function spawnFireworks() {
+    const fw = document.getElementById('promoFireworks');
+    if (!fw) return;
+    fw.innerHTML = '';
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'fw-particle';
+        p.style.cssText = `
+            left:${Math.random()*100}%; top:${Math.random()*60}%;
+            animation-delay:${Math.random()*1.5}s;
+            background:hsl(${Math.random()*360},80%,60%);`;
+        fw.appendChild(p);
+    }
+}
+
+// ─── SUPPORT MODAL ───────────────────────────────────
+function openSupportModal() {
+    document.getElementById('supportModal').classList.remove('hidden');
+}
+function closeSupportModal() {
+    document.getElementById('supportModal').classList.add('hidden');
+}
+function toggleFaq(el) {
+    const ans = el.querySelector('.faq-a');
+    const ico = el.querySelector('.faq-q span');
+    const open = ans.classList.contains('open');
+    // close all
+    document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+    document.querySelectorAll('.faq-q span').forEach(s => s.textContent = '▾');
+    if (!open) { ans.classList.add('open'); if (ico) ico.textContent = '▴'; }
+}
+
+// ─── QUICK REPLY ─────────────────────────────────────
+function quickReply(text) {
+    const input = document.getElementById('chatInput');
+    if (input) { input.value = text; input.focus(); }
+    sendMessage();
+}
+
+// ─── WEATHER WIDGET ──────────────────────────────────
+async function initWeather() {
+    const iconEl = document.getElementById('weatherIcon');
+    const tempEl = document.getElementById('weatherTemp');
+    const descEl = document.getElementById('weatherDesc');
+    if (!iconEl) return;
+    // Use Open-Meteo (free, no key)
+    const lat = userLocation ? userLocation.lat : 41.1944;
+    const lng = userLocation ? userLocation.lng : 61.3098;
+    try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&wind_speed_unit=ms`);
+        const d = await r.json();
+        const cw = d.current_weather;
+        const code = cw.weathercode;
+        const temp = Math.round(cw.temperature);
+        const icons = { 0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️', 45:'🌫️', 48:'🌫️', 51:'🌦️', 61:'🌧️', 71:'🌨️', 80:'🌧️', 95:'⛈️' };
+        const descs = { 0:'Ochiq', 1:'Asosan ochiq', 2:'Bulutli', 3:'Qovoq', 45:'Tuman', 48:'Tuman', 51:'Mayda yomg\'ir', 61:'Yomg\'ir', 71:'Qor', 80:'Yomg\'ir', 95:'Momaqaldiroq' };
+        const ic = Object.keys(icons).reduce((p,c) => Math.abs(c-code)<Math.abs(p-code)?c:p);
+        if (iconEl) iconEl.textContent = icons[ic] || '🌡️';
+        if (tempEl) tempEl.textContent = `${temp}°`;
+        if (descEl) descEl.textContent = descs[ic] || 'Ob-havo';
+    } catch {
+        if (iconEl) iconEl.textContent = '🌡️';
+        if (tempEl) tempEl.textContent = '--°';
+        if (descEl) descEl.textContent = 'Ob-havo';
+    }
 }
 
 // ─── HELPERS ──────────────────────────────────────────

@@ -48,6 +48,12 @@
                 <span class="clock-date" id="clockDate">--</span>
             </div>
         </div>
+        <!-- Weather Widget -->
+        <div class="weather-widget" id="weatherWidget" title="Hozirgi ob-havo">
+            <span class="weather-icon" id="weatherIcon">⏳</span>
+            <span class="weather-temp" id="weatherTemp">--°</span>
+            <span class="weather-desc" id="weatherDesc">Yuklanmoqda</span>
+        </div>
         <div class="nav-right">
             <div class="user-chip" id="userChip">
                 <div class="user-avatar-glow">
@@ -146,19 +152,19 @@
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <button class="qa-btn" onclick="openOrderModal()">
+            <button class="qa-btn" onclick="openOrderModal()" id="qa-order">
                 <span class="qa-icon">🚰</span>
                 <span class="qa-text">Tez Buyurtma</span>
             </button>
-            <button class="qa-btn" onclick="showHistoryModal()">
+            <button class="qa-btn" onclick="openHistoryModal()" id="qa-history">
                 <span class="qa-icon">📋</span>
                 <span class="qa-text">Tarix</span>
             </button>
-            <button class="qa-btn" onclick="showSupportInfo()">
+            <button class="qa-btn" onclick="openSupportModal()" id="qa-support">
                 <span class="qa-icon">💬</span>
                 <span class="qa-text">Yordam</span>
             </button>
-            <button class="qa-btn" onclick="showPromoInfo()">
+            <button class="qa-btn" onclick="openPromoModal()" id="qa-promo">
                 <span class="qa-icon">🎁</span>
                 <span class="qa-text">Aksiyalar</span>
             </button>
@@ -280,6 +286,12 @@
         <div class="chat-messages" id="chatMessages">
             <div class="chat-empty">Xabar yo'q. Birinchi xabar yuboring!</div>
         </div>
+        <div class="chat-quick-replies">
+            <button class="cqr-btn" onclick="quickReply('Hozir yetib boraman!')">🚗 Yetib boraman</button>
+            <button class="cqr-btn" onclick="quickReply('5 daqiqada!')">⏱️ 5 daqiqa</button>
+            <button class="cqr-btn" onclick="quickReply('Qayerdasiz?')">📍 Qayerda?</button>
+            <button class="cqr-btn" onclick="quickReply('Rahmat!')">🙏 Rahmat</button>
+        </div>
         <div class="chat-input-row">
             <input id="chatInput" class="chat-input" type="text" placeholder="Xabar yozing..."
                 onkeydown="handleChatKey(event)" />
@@ -397,6 +409,130 @@
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ═══ HISTORY MODAL ═══ -->
+    <div class="location-dialog hidden" id="historyModal">
+        <div class="location-dialog-inner" style="max-width:520px; max-height:90vh; overflow-y:auto;">
+            <div class="modal-glow-top"></div>
+            <div class="history-modal-header">
+                <div style="font-size:2rem;">📋</div>
+                <h3>Buyurtmalar tarixi</h3>
+                <button class="history-close-btn" onclick="closeHistoryModal()">✕</button>
+            </div>
+            <!-- Filter tabs -->
+            <div class="history-filter-tabs">
+                <button class="hft-btn active" id="hft-all" onclick="filterHistory('all')">Hammasi</button>
+                <button class="hft-btn" id="hft-done" onclick="filterHistory('done')">✅ Bajarilgan</button>
+                <button class="hft-btn" id="hft-cancelled" onclick="filterHistory('cancelled')">❌ Bekor</button>
+            </div>
+            <div id="historyList" class="history-list"></div>
+            <div class="history-stats-bar" id="historyStatsBar"></div>
+        </div>
+    </div>
+
+    <!-- ═══ PROMO MODAL ═══ -->
+    <div class="location-dialog hidden" id="promoModal">
+        <div class="location-dialog-inner promo-inner" style="max-width:420px;">
+            <div class="promo-glow-bg"></div>
+            <div class="promo-fireworks" id="promoFireworks"></div>
+            <div class="promo-header">
+                <div class="promo-badge">🔥 HOT DEAL</div>
+                <h2 class="promo-title">AquaGo Aksiyalari!</h2>
+                <p class="promo-sub">Faqat bugun kuchda</p>
+            </div>
+            <div class="promo-list">
+                <div class="promo-item">
+                    <div class="promo-item-icon">🎁</div>
+                    <div class="promo-item-info">
+                        <strong>5-buyurtmada 1 ta bepul!</strong>
+                        <span>Har 5 ta buyurtmadan keyin 1 ta bepul suv</span>
+                    </div>
+                    <div class="promo-item-tag">AKTIV</div>
+                </div>
+                <div class="promo-item">
+                    <div class="promo-item-icon">⚡</div>
+                    <div class="promo-item-info">
+                        <strong>Tez yetkazish!</strong>
+                        <span>15 daqiqada yetkazib beramiz</span>
+                    </div>
+                    <div class="promo-item-tag promo-green">PREMIUM</div>
+                </div>
+                <div class="promo-item">
+                    <div class="promo-item-icon">💳</div>
+                    <div class="promo-item-info">
+                        <strong>Click bilan -10%!</strong>
+                        <span>Click yoki Payme orqali chegirma</span>
+                    </div>
+                    <div class="promo-item-tag promo-gold">-10%</div>
+                </div>
+                <div class="promo-item">
+                    <div class="promo-item-icon">👥</div>
+                    <div class="promo-item-info">
+                        <strong>Do'stingizni taklif qiling!</strong>
+                        <span>Har bir do'stdan 5,000 so'm bonus</span>
+                    </div>
+                    <div class="promo-item-tag promo-purple">BONUS</div>
+                </div>
+            </div>
+            <div class="promo-countdown">
+                <span class="pc-label">Aksiya tugashiga:</span>
+                <div class="pc-timer">
+                    <div class="pc-unit"><span id="pcHours">--</span><small>soat</small></div>
+                    <div class="pc-sep">:</div>
+                    <div class="pc-unit"><span id="pcMins">--</span><small>daqiqa</small></div>
+                    <div class="pc-sep">:</div>
+                    <div class="pc-unit"><span id="pcSecs">--</span><small>soniya</small></div>
+                </div>
+            </div>
+            <button class="loc-allow-btn" onclick="closePromoModal()" style="margin-top:16px;">✅ Tushundim!</button>
+        </div>
+    </div>
+
+    <!-- ═══ SUPPORT MODAL ═══ -->
+    <div class="location-dialog hidden" id="supportModal">
+        <div class="location-dialog-inner" style="max-width:400px;">
+            <div class="modal-glow-top"></div>
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:2.5rem; margin-bottom:8px;">💬</div>
+                <h3>Yordam markazi</h3>
+                <p style="color:#64748b; font-size:0.85rem; margin-top:6px;">24/7 qo'llab-quvvatlash xizmati</p>
+            </div>
+            <div class="support-links">
+                <a href="https://t.me/aquago_support" target="_blank" class="support-link-btn support-telegram">
+                    <span>✈️</span>
+                    <div>
+                        <strong>Telegram</strong>
+                        <span>@aquago_support</span>
+                    </div>
+                    <span style="margin-left:auto;">→</span>
+                </a>
+                <a href="tel:+998901234567" class="support-link-btn support-call">
+                    <span>📞</span>
+                    <div>
+                        <strong>Qo'ng'iroq</strong>
+                        <span>+998 90 123 45 67</span>
+                    </div>
+                    <span style="margin-left:auto;">→</span>
+                </a>
+                <div class="support-faq">
+                    <div class="faq-title">🙋 Ko'p so'raladigan savollar</div>
+                    <div class="faq-item" onclick="toggleFaq(this)">
+                        <div class="faq-q">Suv qachon yetib keladi? <span>▾</span></div>
+                        <div class="faq-a">Odatda buyurtmadan 15-30 daqiqa ichida.</div>
+                    </div>
+                    <div class="faq-item" onclick="toggleFaq(this)">
+                        <div class="faq-q">Buyurtmani bekor qilish mumkinmi? <span>▾</span></div>
+                        <div class="faq-a">Ha, suvchi yo'lga chiqmagunicha bekor qilish mumkin.</div>
+                    </div>
+                    <div class="faq-item" onclick="toggleFaq(this)">
+                        <div class="faq-q">Narxlar qancha? <span>▾</span></div>
+                        <div class="faq-a">19L – 12,000-15,000 so'm. 5L – 4,000-6,000 so'm.</div>
+                    </div>
+                </div>
+            </div>
+            <button class="loc-deny-btn" onclick="closeSupportModal()" style="margin-top:16px;">Yopish</button>
+        </div>
+    </div>
 
     <!-- Location Permission Dialog -->
     <div class="location-dialog hidden" id="locationDialog">
