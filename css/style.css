@@ -718,12 +718,7 @@ body {
   display: none !important;
 }
 
-/* ============ DL-GRID ============ */
-.dl-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+
 
 /* ============ RESPONSIVE (MOBILE) ============ */
 @media screen and (max-width: 600px) {
@@ -811,15 +806,9 @@ body {
     font-size: 0.82rem;
   }
 
-  .demo-btns,
-  .dl-grid {
+  .demo-btns {
     grid-template-columns: 1fr;
     gap: 6px;
-  }
-
-  #downloadsSection {
-    margin-top: 15px !important;
-    padding-top: 15px !important;
   }
 
   /* --- Top Nav --- */
