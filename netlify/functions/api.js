@@ -8,8 +8,13 @@
 // In-memory store (har bir function invocation uchun yangilanadi)
 // Netlify serverless da persistent storage yo'q, shuning uchun
 // client-side localStorage asosiy storage bo'lib qoladi
+
+// Demo accountlar har doim mavjud bo'lishi kerak
 let memOrders = [];
-let memUsers = [];
+let memUsers = [
+  { id: 'driver-demo', name: 'Alisher Suvchi', phone: '+998901234567', password: '123456', vehicle: '01 A 777 BC', role: 'driver', createdAt: Date.now(), todayEarnings: 0, completedCount: 0 },
+  { id: 'user-demo', name: 'Bobur Abdullayev', phone: '+998907654321', password: '123456', role: 'user', createdAt: Date.now() }
+];
 let memMessages = [];
 let driverLocs = {};
 

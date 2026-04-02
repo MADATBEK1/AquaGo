@@ -28,6 +28,17 @@ try { dbOrders = JSON.parse(fs.readFileSync(DB_ORDERS, 'utf8')); } catch { }
 try { dbUsers = JSON.parse(fs.readFileSync(DB_USERS, 'utf8')); } catch { }
 try { dbMessages = JSON.parse(fs.readFileSync(DB_MSGS, 'utf8')); } catch { }
 
+// ── Demo accountlarni har doim ta'minlash ──────────────────
+const DEMO_USERS = [
+    { id: 'driver-demo', name: 'Alisher Suvchi', phone: '+998901234567', password: '123456', vehicle: '01 A 777 BC', role: 'driver', createdAt: Date.now(), todayEarnings: 0, completedCount: 0 },
+    { id: 'user-demo', name: 'Bobur Abdullayev', phone: '+998907654321', password: '123456', role: 'user', createdAt: Date.now() }
+];
+for (const demo of DEMO_USERS) {
+    if (!dbUsers.find(u => u.id === demo.id)) {
+        dbUsers.push(demo);
+    }
+}
+
 const save = () => {
     try { fs.writeFileSync(DB_ORDERS, JSON.stringify(dbOrders)); } catch { }
     try { fs.writeFileSync(DB_USERS, JSON.stringify(dbUsers)); } catch { }

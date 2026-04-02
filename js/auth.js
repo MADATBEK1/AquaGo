@@ -37,7 +37,6 @@ function fillDemo(type) {
     // Animate button
     const btn = type === 'user'
         ? document.querySelector('.demo-btn.demo-user')
-
         : document.querySelector('.demo-btn.demo-driver');
 
     if (btn) {
@@ -46,11 +45,23 @@ function fillDemo(type) {
         btn.disabled = true;
 
         setTimeout(() => {
+            // MUHIM: Demo accountlarni qayta tiklash (agar serverdan o'chgan bo'lsa)
+            DB.ensureDemoUsers();
+
             // Find the user in DB
             const cleanPhone = acc.phone.replace(/\s/g, '');
-            const user = DB.getUserByPhone(cleanPhone);
+            let user = DB.getUserByPhone(cleanPhone);
 
-            if (user && user.password === acc.password) {
+            // Agar hali ham topilmasa, to'g'ridan-to'g'ri demo user yaratish
+            if (!user) {
+                const demoData = type === 'driver'
+                    ? { id: 'driver-demo', name: 'Alisher Suvchi', phone: '+998901234567', password: '123456', vehicle: '01 A 777 BC', role: 'driver', createdAt: Date.now(), todayEarnings: 0, completedCount: 0 }
+                    : { id: 'user-demo', name: 'Bobur Abdullayev', phone: '+998907654321', password: '123456', role: 'user', createdAt: Date.now() };
+                DB.addUser(demoData);
+                user = demoData;
+            }
+
+            if (user) {
                 DB.setCurrentUser(user);
                 showSuccessFlash();
                 setTimeout(() => redirectUser(user), 600);
@@ -138,6 +149,9 @@ function handleLogin(e) {
 
     setTimeout(() => {
         loader.classList.remove('active');
+
+        // Demo accountlar har doim mavjud bo'lsin
+        DB.ensureDemoUsers();
 
         const user = DB.getUserByPhone(phone);
 

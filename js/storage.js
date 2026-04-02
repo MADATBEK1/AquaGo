@@ -6,9 +6,32 @@
 
 const AQUAGO_PORT = 7474;
 
+// ── Demo accounts – always available ─────────────────────
+const DEMO_USERS = [
+  {
+    id: 'driver-demo', name: 'Alisher Suvchi', phone: '+998901234567',
+    password: '123456', vehicle: '01 A 777 BC', role: 'driver',
+    createdAt: Date.now(), todayEarnings: 0, completedCount: 0
+  },
+  {
+    id: 'user-demo', name: 'Bobur Abdullayev', phone: '+998907654321',
+    password: '123456', role: 'user', createdAt: Date.now()
+  }
+];
+
+/** Ensure demo accounts always exist in a users array */
+function _ensureDemoUsers(users) {
+  const result = Array.isArray(users) ? [...users] : [];
+  for (const demo of DEMO_USERS) {
+    const exists = result.find(u => u.id === demo.id);
+    if (!exists) {
+      result.push(demo);
+    }
+  }
+  return result;
+}
+
 // ── Server URL detection ─────────────────────────────────
-// 1) file:// → try to find server on local network
-// 2) http://  → use current host
 const API_BASE = (() => {
   if (location.protocol !== 'file:') {
     // Agar capacitor localhost bo'lsa
@@ -108,7 +131,10 @@ function _connectSSE() {
 
   _sse.addEventListener('users', e => {
     try {
-      const users = JSON.parse(e.data);
+      let users = JSON.parse(e.data);
+      // MUHIM: serverdan kelgan bo'sh yoki demo'siz listni
+      // demo accountlar bilan to'ldirish kerak
+      users = _ensureDemoUsers(users);
       localStorage.setItem('aquago_users', JSON.stringify(users));
     } catch { }
   });
@@ -196,6 +222,13 @@ const DB = {
     this.saveUsers(users);
   },
 
+  /** Demo accountlarni qayta tiklash (har doim mavjud bo'lishini ta'minlash) */
+  ensureDemoUsers() {
+    const users = _ensureDemoUsers(this.getUsers());
+    localStorage.setItem('aquago_users', JSON.stringify(users));
+    return users;
+  },
+
   /* ---- SESSION ---- */
   setCurrentUser(user) { localStorage.setItem('aquago_current_user', JSON.stringify(user)); },
   getCurrentUser() { return JSON.parse(localStorage.getItem('aquago_current_user') || 'null'); },
@@ -248,21 +281,14 @@ window.addEventListener('storage', e => {
 
 // ── Bootstrap ────────────────────────────────────────────
 (async function boot() {
-  // Demo accounts (first run only)
-  if (DB.getUsers().length === 0) {
-    localStorage.setItem('aquago_users', JSON.stringify([
-      {
-        id: 'driver-demo', name: 'Alisher Suvchi', phone: '+998901234567',
-        password: '123456', vehicle: '01 A 777 BC', role: 'driver',
-        createdAt: Date.now(), todayEarnings: 0, completedCount: 0
-      },
-      {
-        id: 'user-demo', name: 'Bobur Abdullayev', phone: '+998907654321',
-        password: '123456', role: 'user', createdAt: Date.now()
-      }
-    ]));
-  }
+  // Har doim demo accountlar mavjudligini ta'minlash
+  // (birinchi marta yoki serverdan o'chirilgan bo'lsa)
+  DB.ensureDemoUsers();
 
   // Try server connection
   await _detectServer();
+
+  // Server ulanganidan keyin ham demo accountlarni tekshirish
+  // (SSE orqali bo'sh list kelgan bo'lishi mumkin)
+  DB.ensureDemoUsers();
 })();
