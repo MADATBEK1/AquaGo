@@ -55,6 +55,15 @@
             <span class="weather-desc" id="weatherDesc">Yuklanmoqda</span>
         </div>
         <div class="nav-right">
+            <!-- Theme Toggle -->
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Mavzu almashtirish">
+                <span id="themeIcon">🌙</span>
+            </button>
+            <!-- Notifications Bell -->
+            <button class="notif-bell-btn" id="notifBellBtn" onclick="openNotifCenter()" title="Bildirishmalar">
+                🔔
+                <span class="notif-badge hidden" id="notifBadge">0</span>
+            </button>
             <div class="user-chip" id="userChip">
                 <div class="user-avatar-glow">
                     <span class="user-avatar-letter" id="navAvatarLetter">U</span>
@@ -87,6 +96,24 @@
                 <span class="loc-pulse"></span>
                 <span id="locationText">📍 Joylashuv aniqlanmoqda...</span>
             </div>
+        </div>
+
+        <!-- Loyalty Points Banner -->
+        <div class="loyalty-banner" id="loyaltyBanner">
+            <div class="loyalty-left">
+                <div class="loyalty-icon">🏆</div>
+                <div class="loyalty-info">
+                    <span class="loyalty-title">AquaPoints</span>
+                    <span class="loyalty-pts"><span id="userPoints">0</span> ball</span>
+                </div>
+            </div>
+            <div class="loyalty-progress-wrap">
+                <div class="loyalty-progress-bar">
+                    <div class="loyalty-progress-fill" id="loyaltyFill" style="width:0%"></div>
+                </div>
+                <span class="loyalty-next" id="loyaltyNext">50 ballga 1 ta bepul suv 🎁</span>
+            </div>
+            <div class="loyalty-level" id="loyaltyLevel">🥉 Boshlang'ich</div>
         </div>
 
         <!-- Premium Stats row -->
@@ -154,7 +181,7 @@
         <div class="quick-actions">
             <button class="qa-btn" onclick="openOrderModal()" id="qa-order">
                 <span class="qa-icon">🚰</span>
-                <span class="qa-text">Tez Buyurtma</span>
+                <span class="qa-text">Buyurtma</span>
             </button>
             <button class="qa-btn" onclick="openHistoryModal()" id="qa-history">
                 <span class="qa-icon">📋</span>
@@ -167,6 +194,14 @@
             <button class="qa-btn" onclick="openPromoModal()" id="qa-promo">
                 <span class="qa-icon">🎁</span>
                 <span class="qa-text">Aksiyalar</span>
+            </button>
+            <button class="qa-btn" onclick="openActivityModal()" id="qa-activity">
+                <span class="qa-icon">📊</span>
+                <span class="qa-text">Grafik</span>
+            </button>
+            <button class="qa-btn" onclick="openLoyaltyModal()" id="qa-loyalty">
+                <span class="qa-icon">🏆</span>
+                <span class="qa-text">Balllar</span>
             </button>
         </div>
 
@@ -370,7 +405,7 @@
             <div class="order-form">
                 <div class="form-field">
                     <label>💧 Suv turi:</label>
-                    <select id="waterType" onchange="updateWaterDesc()" class="premium-select">
+                    <select id="waterType" onchange="updateWaterDesc(); updatePriceCalc()" class="premium-select">
                         <option value="19L Kalyonka">19 Litr (Kalyonka)</option>
                         <option value="5L Baklajka">5 Litr (Baklajka)</option>
                         <option value="Pompa">Suv pompasi</option>
@@ -392,11 +427,31 @@
 
                 <div class="form-field">
                     <label>💳 To'lov turi:</label>
-                    <select id="paymentType" class="premium-select">
+                    <select id="paymentType" onchange="updatePriceCalc()" class="premium-select">
                         <option value="Naqd">Naqd pul</option>
-                        <option value="Click">Click orqali</option>
-                        <option value="Payme">Payme orqali</option>
+                        <option value="Click">Click orqali (-10%)</option>
+                        <option value="Payme">Payme orqali (-10%)</option>
                     </select>
+                </div>
+
+                <!-- 💰 Price Calculator -->
+                <div class="price-calculator" id="priceCalc">
+                    <div class="pc-row">
+                        <span class="pc-label">Asosiy narx:</span>
+                        <span class="pc-val" id="pcBase">13,000 so'm</span>
+                    </div>
+                    <div class="pc-row pc-discount hidden" id="pcDiscountRow">
+                        <span class="pc-label">Chegirma (-10%):</span>
+                        <span class="pc-val pc-green" id="pcDiscount">-1,300 so'm</span>
+                    </div>
+                    <div class="pc-divider"></div>
+                    <div class="pc-row pc-total-row">
+                        <span class="pc-label">💰 Jami:</span>
+                        <span class="pc-total" id="pcTotal">13,000 so'm</span>
+                    </div>
+                    <div class="pc-points-earn">
+                        <span>🏆 +<span id="pcPoints">10</span> AquaPoint yig'asiz!</span>
+                    </div>
                 </div>
             </div>
 
@@ -543,6 +598,39 @@
             <p>Suvchi sizni topishi uchun joylashuvingizga ruxsat bering</p>
             <button class="loc-allow-btn" onclick="getLocation()">Ruxsat berish</button>
             <button class="loc-deny-btn" onclick="useDefaultLocation()">Standart joylashuv</button>
+        </div>
+    </div>
+
+    <!-- ═══ NOTIFICATIONS CENTER ═══ -->
+    <div class="location-dialog hidden" id="notifCenter">
+        <div class="location-dialog-inner" style="max-width:420px; max-height:80vh; overflow-y:auto;">
+            <div class="modal-glow-top"></div>
+            <div class="notif-center-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5rem;">🔔</span>
+                    <h3>Bildirishmalar</h3>
+                </div>
+                <button class="history-close-btn" onclick="closeNotifCenter()">✕</button>
+            </div>
+            <div id="notifList" class="notif-list"></div>
+            <button class="loc-deny-btn" onclick="clearAllNotifs()" style="margin-top:12px;">🗑️ Hammasini o'chirish</button>
+        </div>
+    </div>
+
+    <!-- ═══ ACTIVITY CHART MODAL ═══ -->
+    <div class="location-dialog hidden" id="activityModal">
+        <div class="location-dialog-inner" style="max-width:480px;">
+            <div class="modal-glow-top"></div>
+            <div class="history-modal-header">
+                <div style="font-size:2rem;">📊</div>
+                <h3>Faollik grafigi</h3>
+                <button class="history-close-btn" onclick="closeActivityModal()">✕</button>
+            </div>
+            <div class="activity-chart-wrap">
+                <div class="activity-chart-bars" id="activityBars"></div>
+                <div class="activity-chart-labels" id="activityLabels"></div>
+            </div>
+            <div class="activity-summary" id="activitySummary"></div>
         </div>
     </div>
 

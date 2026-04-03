@@ -951,3 +951,376 @@ function showToast(message, type = 'info', duration = 4000) {
     container.appendChild(toast);
     setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, duration);
 }
+
+// ══════════════════════════════════════════════════════
+//  🏆 LOYALTY POINTS SYSTEM
+// ══════════════════════════════════════════════════════
+const POINTS_PER_ORDER = 10;
+const LEVELS = [
+    { name: "🥉 Boshlang'ich", min: 0, color: '#cd7f32' },
+    { name: '🥈 Kumush',      min: 50,  color: '#94a3b8' },
+    { name: '🥇 Oltin',       min: 150, color: '#f59e0b' },
+    { name: '💎 Brilliant',   min: 300, color: '#38bdf8' },
+    { name: '👑 Ustoz',       min: 500, color: '#a78bfa' }
+];
+
+function getUserPoints() {
+    const key = `aquago_points_${currentUser?.id}`;
+    return parseInt(localStorage.getItem(key) || '0');
+}
+
+function addPoints(pts) {
+    const key = `aquago_points_${currentUser?.id}`;
+    const prev = getUserPoints();
+    const next = prev + pts;
+    localStorage.setItem(key, next);
+    const prevLevel = getLevelInfo(prev);
+    const nextLevel = getLevelInfo(next);
+    if (prevLevel.name !== nextLevel.name) {
+        showToast(`🎉 ${nextLevel.name} darajasiga ko'tarildingiz!`, 'success', 5000);
+        addNotification(`Level UP! ${nextLevel.name} darajasi qo'lga kiritildi! 🎊`, 'level');
+    }
+    updateLoyaltyUI();
+}
+
+function getLevelInfo(pts) {
+    let lvl = LEVELS[0];
+    LEVELS.forEach(l => { if (pts >= l.min) lvl = l; });
+    return lvl;
+}
+
+function getNextLevel(pts) {
+    return LEVELS.find(l => l.min > pts);
+}
+
+function updateLoyaltyUI() {
+    const pts = getUserPoints();
+    const lvl = getLevelInfo(pts);
+    const next = getNextLevel(pts);
+    const ptsEl = document.getElementById('userPoints');
+    const lvlEl = document.getElementById('loyaltyLevel');
+    const fillEl = document.getElementById('loyaltyFill');
+    const nextEl = document.getElementById('loyaltyNext');
+    if (ptsEl) ptsEl.textContent = pts.toLocaleString();
+    if (lvlEl) { lvlEl.textContent = lvl.name; lvlEl.style.color = lvl.color; }
+    if (fillEl && next) {
+        const pct = Math.min(100, ((pts - lvl.min) / (next.min - lvl.min)) * 100);
+        fillEl.style.width = pct + '%';
+    } else if (fillEl) fillEl.style.width = '100%';
+    if (nextEl) {
+        if (next) nextEl.textContent = `${next.min - pts} ball → ${next.name}`;
+        else nextEl.textContent = '👑 Eng yuqori daraja!';
+    }
+}
+
+function openLoyaltyModal() {
+    const pts = getUserPoints();
+    const lvl = getLevelInfo(pts);
+    const next = getNextLevel(pts);
+    const orders = DB.getUserOrders(currentUser.id).filter(o => ['done','paid','delivered'].includes(o.status));
+
+    const html = `
+    <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:3rem; margin-bottom:8px;">${lvl.name.split(' ')[0]}</div>
+        <h3 style="font-size:1.4rem;">${lvl.name}</h3>
+        <div style="font-size:2rem; font-weight:900; color:#38bdf8; margin:8px 0;">${pts.toLocaleString()} ball</div>
+        <p style="color:#64748b; font-size:0.85rem;">${next ? `${next.min - pts} ball qoldi → ${next.name}` : '👑 Maksimal daraja!'}</p>
+    </div>
+    <div class="loyalty-rewards-grid">
+        ${LEVELS.map(l => `
+        <div class="loyalty-reward-item ${pts >= l.min ? 'unlocked' : 'locked'}">
+            <div class="lri-icon">${l.name.split(' ')[0]}</div>
+            <div class="lri-name">${l.name.split(' ').slice(1).join(' ')}</div>
+            <div class="lri-pts">${l.min} ball</div>
+            ${pts >= l.min ? '<div class="lri-check">✅</div>' : '<div class="lri-lock">🔒</div>'}
+        </div>`).join('')}
+    </div>
+    <div class="loyalty-history-title">📦 So'nggi buyurtmalar</div>
+    <div class="loyalty-orders-mini">
+        ${orders.slice(-5).reverse().map(o => `
+        <div class="lom-item">
+            <span>${o.waterType || 'Suv'}</span>
+            <span style="color:#22c55e;">+${POINTS_PER_ORDER} ball</span>
+        </div>`).join('') || '<div style="color:#64748b;text-align:center;padding:12px;">Hali bajarilgan buyurtma yo\'q</div>'}
+    </div>`;
+
+    const modal = document.getElementById('loyaltyModal');
+    if (!modal) {
+        // Create it on-the-fly
+        const div = document.createElement('div');
+        div.className = 'location-dialog hidden';
+        div.id = 'loyaltyModal';
+        div.innerHTML = `<div class="location-dialog-inner" style="max-width:420px; max-height:85vh; overflow-y:auto;">
+            <div class="modal-glow-top"></div>
+            <div class="history-modal-header">
+                <div style="font-size:2rem;">🏆</div>
+                <h3>AquaPoints</h3>
+                <button class="history-close-btn" onclick="document.getElementById('loyaltyModal').classList.add('hidden')">✕</button>
+            </div>
+            <div id="loyaltyModalBody"></div>
+            <button class="loc-deny-btn" onclick="document.getElementById('loyaltyModal').classList.add('hidden')" style="margin-top:12px;">Yopish</button>
+        </div>`;
+        document.body.appendChild(div);
+    }
+    document.getElementById('loyaltyModalBody').innerHTML = html;
+    document.getElementById('loyaltyModal').classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════════════════
+//  💰 PRICE CALCULATOR
+// ══════════════════════════════════════════════════════
+const WATER_PRICES = {
+    '19L Kalyonka': 13000,
+    '5L Baklajka': 5000,
+    'Pompa': 32000
+};
+
+function updatePriceCalc() {
+    const wType = document.getElementById('waterType')?.value || '19L Kalyonka';
+    const pType = document.getElementById('paymentType')?.value || 'Naqd';
+    const qty = orderParams?.quantity || 1;
+    const baseUnit = WATER_PRICES[wType] || 13000;
+    const base = baseUnit * qty;
+    const hasDiscount = (pType === 'Click' || pType === 'Payme');
+    const discountAmt = hasDiscount ? Math.round(base * 0.1) : 0;
+    const total = base - discountAmt;
+    const pts = qty * POINTS_PER_ORDER;
+
+    const baseEl = document.getElementById('pcBase');
+    const discRow = document.getElementById('pcDiscountRow');
+    const discEl = document.getElementById('pcDiscount');
+    const totalEl = document.getElementById('pcTotal');
+    const ptsEl = document.getElementById('pcPoints');
+
+    if (baseEl) baseEl.textContent = base.toLocaleString() + " so'm";
+    if (discRow) discRow.classList.toggle('hidden', !hasDiscount);
+    if (discEl) discEl.textContent = '-' + discountAmt.toLocaleString() + " so'm";
+    if (totalEl) totalEl.textContent = total.toLocaleString() + " so'm";
+    if (ptsEl) ptsEl.textContent = pts;
+}
+
+// Override changeQuantity to also update price
+const _origChangeQty = changeQuantity;
+function changeQuantity(val) {
+    orderParams.quantity = Math.max(1, Math.min(20, orderParams.quantity + val));
+    document.getElementById('orderQuantity').textContent = orderParams.quantity;
+    updatePriceCalc();
+}
+
+// ══════════════════════════════════════════════════════
+//  🔔 NOTIFICATIONS CENTER
+// ══════════════════════════════════════════════════════
+function getNotifications() {
+    const key = `aquago_notifs_${currentUser?.id}`;
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); }
+    catch { return []; }
+}
+
+function saveNotifications(arr) {
+    const key = `aquago_notifs_${currentUser?.id}`;
+    localStorage.setItem(key, JSON.stringify(arr.slice(-50)));
+}
+
+function addNotification(text, type = 'info') {
+    const notifs = getNotifications();
+    notifs.push({ id: Date.now(), text, type, read: false, ts: Date.now() });
+    saveNotifications(notifs);
+    updateNotifBadge();
+}
+
+function updateNotifBadge() {
+    const notifs = getNotifications();
+    const unread = notifs.filter(n => !n.read).length;
+    const badge = document.getElementById('notifBadge');
+    if (!badge) return;
+    if (unread > 0) {
+        badge.textContent = unread > 9 ? '9+' : unread;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function openNotifCenter() {
+    // Mark all as read
+    const notifs = getNotifications();
+    notifs.forEach(n => n.read = true);
+    saveNotifications(notifs);
+    updateNotifBadge();
+    renderNotifList();
+    document.getElementById('notifCenter').classList.remove('hidden');
+}
+
+function closeNotifCenter() {
+    document.getElementById('notifCenter').classList.add('hidden');
+}
+
+function clearAllNotifs() {
+    saveNotifications([]);
+    renderNotifList();
+    updateNotifBadge();
+}
+
+function renderNotifList() {
+    const container = document.getElementById('notifList');
+    if (!container) return;
+    const notifs = getNotifications().slice().reverse();
+    if (!notifs.length) {
+        container.innerHTML = '<div style="text-align:center; color:#475569; padding:30px 0; font-size:0.9rem;">🔕 Bildirishmalar yo\'q</div>';
+        return;
+    }
+    const typeIcons = { info: 'ℹ️', success: '✅', warning: '⚠️', level: '🎖️', order: '📦' };
+    container.innerHTML = notifs.map(n => {
+        const ago = formatAgo(n.ts);
+        return `<div class="notif-item ${n.read ? '' : 'unread'}">
+            <span class="notif-item-icon">${typeIcons[n.type] || 'ℹ️'}</span>
+            <div class="notif-item-body">
+                <div class="notif-item-text">${n.text}</div>
+                <div class="notif-item-time">${ago}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function formatAgo(ts) {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'Hozir';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} daqiqa oldin`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} soat oldin`;
+    return new Date(ts).toLocaleDateString('uz-UZ');
+}
+
+// ══════════════════════════════════════════════════════
+//  🌙 THEME TOGGLE (Dark / Light)
+// ══════════════════════════════════════════════════════
+function initTheme() {
+    const saved = localStorage.getItem('aquago_theme') || 'dark';
+    applyTheme(saved);
+}
+
+function toggleTheme() {
+    const current = localStorage.getItem('aquago_theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem('aquago_theme', next);
+}
+
+function applyTheme(theme) {
+    const iconEl = document.getElementById('themeIcon');
+    if (theme === 'light') {
+        document.body.classList.add('light-theme');
+        if (iconEl) iconEl.textContent = '☀️';
+    } else {
+        document.body.classList.remove('light-theme');
+        if (iconEl) iconEl.textContent = '🌙';
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  📊 ACTIVITY CHART (7 days)
+// ══════════════════════════════════════════════════════
+function openActivityModal() {
+    renderActivityChart();
+    document.getElementById('activityModal').classList.remove('hidden');
+}
+
+function closeActivityModal() {
+    document.getElementById('activityModal').classList.add('hidden');
+}
+
+function renderActivityChart() {
+    const orders = DB.getUserOrders(currentUser.id);
+    const days = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
+    const today = new Date();
+    const counts = [];
+    const labels = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const dayStr = d.toDateString();
+        const count = orders.filter(o => new Date(o.createdAt).toDateString() === dayStr).length;
+        counts.push(count);
+        labels.push(days[d.getDay()]);
+    }
+    const maxCount = Math.max(...counts, 1);
+    const barsEl = document.getElementById('activityBars');
+    const labelsEl = document.getElementById('activityLabels');
+    const summaryEl = document.getElementById('activitySummary');
+    if (!barsEl) return;
+
+    barsEl.innerHTML = counts.map((c, i) => {
+        const pct = (c / maxCount * 100).toFixed(1);
+        const isToday = i === 6;
+        return `<div class="act-bar-wrap">
+            <div class="act-bar-count">${c > 0 ? c : ''}</div>
+            <div class="act-bar ${isToday ? 'today' : ''}" style="height:${Math.max(pct, 4)}%;">
+                <div class="act-bar-fill"></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    if (labelsEl) labelsEl.innerHTML = labels.map((l, i) =>
+        `<div class="act-label ${i === 6 ? 'today-label' : ''}">${l}</div>`
+    ).join('');
+
+    const totalWeek = counts.reduce((a, b) => a + b, 0);
+    const bestDay = labels[counts.indexOf(Math.max(...counts))];
+    if (summaryEl) summaryEl.innerHTML = `
+        <div class="act-summary-grid">
+            <div class="act-sum-item">
+                <div class="act-sum-num">${totalWeek}</div>
+                <div class="act-sum-lab">Bu hafta</div>
+            </div>
+            <div class="act-sum-item">
+                <div class="act-sum-num">${counts[6]}</div>
+                <div class="act-sum-lab">Bugun</div>
+            </div>
+            <div class="act-sum-item">
+                <div class="act-sum-num">${bestDay}</div>
+                <div class="act-sum-lab">Eng faol kun</div>
+            </div>
+            <div class="act-sum-item">
+                <div class="act-sum-num">${getUserPoints()}</div>
+                <div class="act-sum-lab">AquaPoints</div>
+            </div>
+        </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  🔁 OVERRIDE confirmOrder to add loyalty points + notif
+// ══════════════════════════════════════════════════════
+const _origConfirmOrder = confirmOrder;
+window.addEventListener('aquago_order_completed', (e) => {
+    addPoints(POINTS_PER_ORDER);
+    addNotification(`✅ Buyurtma bajarildi! +${POINTS_PER_ORDER} AquaPoint qo'shildi.`, 'success');
+});
+
+// Hook into order status to add notifications
+const _origCheckOrderStatus = checkOrderStatus;
+let _lastOrderStatus = null;
+function checkOrderStatus() {
+    _origCheckOrderStatus();
+    if (!activeOrderId) return;
+    const order = DB.getOrderById(activeOrderId);
+    if (!order) return;
+    if (order.status !== _lastOrderStatus) {
+        _lastOrderStatus = order.status;
+        if (order.status === 'accepted') {
+            addNotification(`🚗 ${order.driverName || 'Suvchi'} buyurtmangizni qabul qildi!`, 'order');
+            updateNotifBadge();
+        } else if (order.status === 'delivered') {
+            addNotification('📦 Suvchi suv yetkazib berdi! To\'lovni tasdiqlang.', 'order');
+            updateNotifBadge();
+        }
+    }
+}
+
+// Override initUserDashboard to init new features
+const _origInitUserDashboard = initUserDashboard;
+function initUserDashboard() {
+    _origInitUserDashboard();
+    initTheme();
+    updateLoyaltyUI();
+    updateNotifBadge();
+    updatePriceCalc();
+}

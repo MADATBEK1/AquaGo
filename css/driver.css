@@ -1600,3 +1600,140 @@
     margin-bottom: 3px;
 }
 .insight-label { font-size: 0.68rem; color: var(--text-muted); }
+
+/* ══════════════════════════════════════════════════════
+   🎯 DAILY GOAL TRACKER CARD
+   ══════════════════════════════════════════════════════ */
+.daily-goal-card {
+    margin: 0 20px 14px;
+    background: linear-gradient(135deg, rgba(34,197,94,0.06), rgba(16,163,74,0.03));
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 18px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.daily-goal-card::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 120px; height: 100%;
+    background: radial-gradient(circle at right, rgba(34,197,94,0.08), transparent 70%);
+    pointer-events: none;
+}
+.daily-goal-card:hover {
+    border-color: rgba(34,197,94,0.4);
+    box-shadow: 0 8px 30px rgba(34,197,94,0.12);
+    transform: translateY(-2px);
+}
+
+.dg-left { flex-shrink: 0; }
+.dg-ring-wrap {
+    position: relative;
+    width: 72px; height: 72px;
+    display: flex; align-items: center; justify-content: center;
+}
+.dg-ring-svg {
+    width: 72px; height: 72px;
+    position: absolute; top: 0; left: 0;
+}
+.dg-ring-svg circle {
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.dg-ring-pct {
+    position: relative; z-index: 1;
+    font-size: 0.78rem; font-weight: 800;
+    color: #22c55e;
+}
+
+.dg-right { flex: 1; min-width: 0; }
+.dg-title {
+    font-size: 0.82rem; font-weight: 700;
+    color: #22c55e; margin-bottom: 6px;
+}
+.dg-counts {
+    display: flex; align-items: baseline; gap: 4px;
+    margin-bottom: 8px;
+}
+.dg-done {
+    font-size: 1.6rem; font-weight: 900;
+    color: #22c55e; line-height: 1;
+}
+.dg-sep { color: #475569; font-size: 1rem; }
+.dg-total { font-size: 1rem; font-weight: 700; color: #94a3b8; }
+.dg-unit { font-size: 0.72rem; color: #475569; margin-left: 2px; }
+
+.dg-bar-track {
+    height: 6px; background: rgba(255,255,255,0.06);
+    border-radius: 6px; overflow: hidden; margin-bottom: 8px;
+}
+.dg-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 6px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 8px rgba(34,197,94,0.4);
+}
+.dg-motivate {
+    font-size: 0.72rem; font-weight: 600;
+    color: #94a3b8;
+    transition: color 0.4s;
+}
+
+/* Daily Goal Modal Stats Grid */
+.dg-modal-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 16px;
+}
+.dg-ms-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 12px 8px; text-align: center;
+}
+.dg-ms-num {
+    font-size: 1.3rem; font-weight: 800; line-height: 1;
+    margin-bottom: 4px;
+}
+.dg-ms-lab { font-size: 0.65rem; color: #475569; font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════
+   📱 MOBILE RESPONSIVE FOR DRIVER
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .driver-dashboard {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .driver-left-panel {
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        max-height: 55vh;
+        overflow-y: auto;
+    }
+    .driver-map-container {
+        min-height: 45vh;
+    }
+    .driver-insights {
+        grid-template-columns: repeat(4, 1fr);
+        margin: 0 12px 10px;
+    }
+    .daily-goal-card {
+        margin: 0 12px 10px;
+    }
+    .dg-modal-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .driver-insights {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .dg-ring-wrap { width: 56px; height: 56px; }
+    .dg-ring-svg { width: 56px; height: 56px; }
+    .dg-done { font-size: 1.3rem; }
+}

@@ -2376,3 +2376,307 @@
     max-height: 100px;
     padding: 10px 16px 14px;
 }
+
+/* ══════════════════════════════════════════════════════
+   🏆 LOYALTY BANNER
+   ══════════════════════════════════════════════════════ */
+.loyalty-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(251,191,36,0.04));
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 18px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    flex-wrap: wrap;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.loyalty-banner:hover {
+    border-color: rgba(245,158,11,0.4);
+    box-shadow: 0 8px 30px rgba(245,158,11,0.1);
+    transform: translateY(-1px);
+}
+.loyalty-banner::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 180px; height: 100%;
+    background: radial-gradient(circle at right, rgba(245,158,11,0.06), transparent 70%);
+    pointer-events: none;
+}
+.loyalty-left {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.loyalty-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(251,191,36,0.1));
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    animation: trophyGlow 3s ease-in-out infinite;
+}
+@keyframes trophyGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+    50% { box-shadow: 0 0 15px rgba(245,158,11,0.3); }
+}
+.loyalty-info { display: flex; flex-direction: column; }
+.loyalty-title { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.loyalty-pts { font-size: 1.1rem; font-weight: 800; color: #fbbf24; }
+.loyalty-progress-wrap { flex: 1; min-width: 120px; }
+.loyalty-progress-bar {
+    height: 6px; background: rgba(255,255,255,0.06);
+    border-radius: 10px; overflow: hidden; margin-bottom: 6px;
+}
+.loyalty-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 10px rgba(245,158,11,0.4);
+}
+.loyalty-next { font-size: 0.72rem; color: #64748b; }
+.loyalty-level {
+    font-size: 0.78rem; font-weight: 700; padding: 4px 12px;
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════
+   🔔 NOTIFICATION BELL + THEME TOGGLE
+   ══════════════════════════════════════════════════════ */
+.theme-toggle-btn, .notif-bell-btn {
+    position: relative;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    color: white;
+    flex-shrink: 0;
+}
+.theme-toggle-btn:hover, .notif-bell-btn:hover {
+    background: rgba(14,165,233,0.12);
+    border-color: rgba(14,165,233,0.3);
+    transform: translateY(-1px);
+}
+.notif-badge {
+    position: absolute;
+    top: -5px; right: -5px;
+    min-width: 18px; height: 18px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 50px;
+    font-size: 0.65rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    color: white; border: 2px solid var(--bg-primary, #050a19);
+    animation: badgePop 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes badgePop { 0%{transform:scale(0)} 80%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+/* ══════════════════════════════════════════════════════
+   💰 PRICE CALCULATOR
+   ══════════════════════════════════════════════════════ */
+.price-calculator {
+    background: rgba(34,197,94,0.05);
+    border: 1px solid rgba(34,197,94,0.15);
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 8px;
+}
+.pc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+}
+.pc-label { font-size: 0.82rem; color: #64748b; }
+.pc-val { font-size: 0.88rem; font-weight: 600; color: #e2e8f0; }
+.pc-green { color: #22c55e !important; }
+.pc-divider {
+    height: 1px; background: rgba(255,255,255,0.07);
+    margin: 8px 0;
+}
+.pc-total-row { align-items: center; }
+.pc-total {
+    font-size: 1.15rem; font-weight: 900;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.pc-points-earn {
+    margin-top: 10px;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.15);
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 0.78rem; color: #fbbf24; font-weight: 600;
+    text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════
+   🔔 NOTIFICATIONS CENTER
+   ══════════════════════════════════════════════════════ */
+.notif-center-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+}
+.notif-list { display: flex; flex-direction: column; gap: 8px; }
+.notif-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+.notif-item.unread {
+    background: rgba(14,165,233,0.06);
+    border-color: rgba(14,165,233,0.15);
+}
+.notif-item-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+.notif-item-body { flex: 1; }
+.notif-item-text { font-size: 0.85rem; line-height: 1.5; color: #e2e8f0; }
+.notif-item-time { font-size: 0.72rem; color: #475569; margin-top: 4px; }
+
+/* ══════════════════════════════════════════════════════
+   📊 ACTIVITY CHART
+   ══════════════════════════════════════════════════════ */
+.activity-chart-wrap {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px; padding: 20px 16px 8px;
+    margin-bottom: 16px;
+}
+.activity-chart-bars {
+    display: flex; align-items: flex-end; gap: 8px;
+    height: 140px; padding-bottom: 8px;
+}
+.act-bar-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; height: 100%;
+    justify-content: flex-end;
+}
+.act-bar-count {
+    font-size: 0.7rem; font-weight: 700; color: #94a3b8;
+    min-height: 14px;
+}
+.act-bar {
+    width: 100%; border-radius: 6px 6px 0 0;
+    background: rgba(14,165,233,0.2);
+    border: 1px solid rgba(14,165,233,0.15);
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+    min-height: 6px;
+}
+.act-bar.today {
+    background: rgba(14,165,233,0.35);
+    border-color: rgba(14,165,233,0.4);
+    box-shadow: 0 0 12px rgba(14,165,233,0.3);
+}
+.act-bar-fill {
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, rgba(56,189,248,0.5), rgba(14,165,233,0.2));
+}
+.activity-chart-labels {
+    display: flex; gap: 8px;
+    padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);
+}
+.act-label {
+    flex: 1; text-align: center;
+    font-size: 0.7rem; color: #475569; font-weight: 500;
+}
+.act-label.today-label { color: #38bdf8; font-weight: 700; }
+.activity-summary { margin-top: 4px; }
+.act-summary-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+.act-sum-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 12px 8px; text-align: center;
+}
+.act-sum-num {
+    font-size: 1.2rem; font-weight: 800; color: #38bdf8;
+}
+.act-sum-lab { font-size: 0.65rem; color: #475569; margin-top: 4px; font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════
+   🏆 LOYALTY MODAL INNER ELEMENTS
+   ══════════════════════════════════════════════════════ */
+.loyalty-rewards-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    margin-bottom: 20px;
+}
+.loyalty-reward-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 12px 6px; text-align: center;
+    transition: all 0.3s;
+}
+.loyalty-reward-item.unlocked {
+    background: rgba(34,197,94,0.06);
+    border-color: rgba(34,197,94,0.2);
+}
+.lri-icon { font-size: 1.4rem; margin-bottom: 4px; }
+.lri-name { font-size: 0.62rem; font-weight: 600; color: #94a3b8; }
+.lri-pts { font-size: 0.6rem; color: #475569; margin-top: 2px; }
+.lri-check { font-size: 0.75rem; margin-top: 4px; }
+.lri-lock { font-size: 0.75rem; margin-top: 4px; opacity: 0.5; }
+.loyalty-history-title {
+    font-size: 0.85rem; font-weight: 700; color: #64748b;
+    margin-bottom: 10px;
+}
+.loyalty-orders-mini { display: flex; flex-direction: column; gap: 6px; }
+.lom-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px; font-size: 0.82rem;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ══════════════════════════════════════════════════════
+   🌞 LIGHT THEME
+   ══════════════════════════════════════════════════════ */
+body.light-theme {
+    background: #f0f9ff !important;
+    color: #0c1528 !important;
+}
+body.light-theme .top-nav {
+    background: rgba(240,249,255,0.9) !important;
+    border-bottom-color: rgba(14,165,233,0.2) !important;
+}
+body.light-theme .stat-card,
+body.light-theme .order-item,
+body.light-theme .qa-btn,
+body.light-theme .location-dialog-inner {
+    background: rgba(255,255,255,0.8) !important;
+    border-color: rgba(14,165,233,0.15) !important;
+}
+body.light-theme .greeting-text {
+    background: linear-gradient(135deg, #0c1528, #0284c7, #0ea5e9) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+}
+body.light-theme .loyalty-banner {
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(254,243,199,0.5)) !important;
+}
+body.light-theme .price-calculator {
+    background: rgba(34,197,94,0.06) !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   📐 QUICK ACTIONS 6-Grid
+   ══════════════════════════════════════════════════════ */
+.quick-actions {
+    grid-template-columns: repeat(6, 1fr) !important;
+}
+@media (max-width: 500px) {
+    .quick-actions { grid-template-columns: repeat(3, 1fr) !important; }
+    .loyalty-rewards-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    .act-summary-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}

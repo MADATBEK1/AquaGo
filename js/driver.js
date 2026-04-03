@@ -1328,3 +1328,210 @@ window.addEventListener('aquago_message', e => {
     showToast(`💬 Mijoz: ${msg.text.slice(0, 40)}`, 'info', 4000);
     loadDriverMessages(activeOrderId);
 });
+
+// ══════════════════════════════════════════════════════
+//  🎯 DAILY GOAL TRACKER
+// ══════════════════════════════════════════════════════
+const DAILY_GOAL_DEFAULT = 10;
+const MOTIVATE_MSGS = [
+    { pct: 0,   msg: "Kuchingizni ko'rsating! 💪" },
+    { pct: 10,  msg: "Zo'r start! Davom eting! 🚀" },
+    { pct: 30,  msg: "Ajoyib! Yarmiga yaqinlashyapsiz 🔥" },
+    { pct: 50,  msg: "Yarim yo'l o'tildi! Barakalla! ⚡" },
+    { pct: 70,  msg: "Deyarli yetib keldingiz! 🏃" },
+    { pct: 90,  msg: "Bir qadam qoldi! Bering shu! 🎯" },
+    { pct: 100, msg: "MAQSADGA YETDINGIZ! 🏆🎉" }
+];
+
+function getDailyGoal() {
+    const key = `aquago_goal_${currentDriver?.id}`;
+    return parseInt(localStorage.getItem(key) || DAILY_GOAL_DEFAULT);
+}
+
+function setDailyGoal(val) {
+    const key = `aquago_goal_${currentDriver?.id}`;
+    localStorage.setItem(key, Math.max(1, Math.min(50, val)));
+}
+
+function getDailyDone() {
+    const myOrders = DB.getOrders().filter(o => o.driverId === currentDriver?.id);
+    const today = new Date().toDateString();
+    return myOrders.filter(o =>
+        (o.status === 'done' || o.status === 'paid') &&
+        new Date(o.completedAt || o.createdAt).toDateString() === today
+    ).length;
+}
+
+function getDriverStreak() {
+    const key = `aquago_streak_${currentDriver?.id}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{"streak":0,"lastDate":""}');
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    const myOrders = DB.getOrders().filter(o => o.driverId === currentDriver?.id);
+    const todayDone = myOrders.filter(o =>
+        (o.status === 'done' || o.status === 'paid') &&
+        new Date(o.completedAt || o.createdAt).toDateString() === today
+    ).length;
+
+    if (data.lastDate === today) return data.streak;
+    if (todayDone > 0) {
+        const newStreak = (data.lastDate === yesterday) ? data.streak + 1 : 1;
+        localStorage.setItem(key, JSON.stringify({ streak: newStreak, lastDate: today }));
+        return newStreak;
+    }
+    return (data.lastDate === yesterday) ? data.streak : 0;
+}
+
+function updateDailyGoalUI() {
+    const done = getDailyDone();
+    const goal = getDailyGoal();
+    const pct = Math.min(100, Math.round((done / goal) * 100));
+    const streak = getDriverStreak();
+
+    // Ring SVG
+    const circle = document.getElementById('dgRingCircle');
+    if (circle) {
+        const circumference = 176;
+        const offset = circumference - (pct / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+        // Color based on progress
+        const colors = pct >= 100 ? ['#f59e0b', '#d97706'] :
+                       pct >= 70  ? ['#22c55e', '#16a34a'] :
+                       pct >= 30  ? ['#0ea5e9', '#0284c7'] :
+                                   ['#6366f1', '#4f46e5'];
+        const grad = document.getElementById('dgGrad');
+        if (grad) {
+            grad.children[0].setAttribute('stop-color', colors[0]);
+            grad.children[1].setAttribute('stop-color', colors[1]);
+        }
+    }
+
+    const pctEl = document.getElementById('dgRingPct');
+    if (pctEl) pctEl.textContent = pct + '%';
+
+    const doneEl = document.getElementById('dgDone');
+    if (doneEl) doneEl.textContent = done;
+
+    const totalEl = document.getElementById('dgTotal');
+    if (totalEl) totalEl.textContent = goal;
+
+    const barFill = document.getElementById('dgBarFill');
+    if (barFill) barFill.style.width = pct + '%';
+
+    // Motivational message
+    const motivateEl = document.getElementById('dgMotivate');
+    if (motivateEl) {
+        const msg = MOTIVATE_MSGS.slice().reverse().find(m => pct >= m.pct);
+        motivateEl.textContent = msg ? msg.msg : MOTIVATE_MSGS[0].msg;
+        if (pct >= 100) motivateEl.style.color = '#f59e0b';
+        else if (pct >= 70) motivateEl.style.color = '#22c55e';
+        else motivateEl.style.color = '#94a3b8';
+    }
+
+    // Insight cards
+    const goalPctEl = document.getElementById('dGoalPct');
+    if (goalPctEl) goalPctEl.textContent = pct + '%';
+
+    const streakEl = document.getElementById('dStreak');
+    if (streakEl) streakEl.textContent = streak;
+}
+
+function openDailyGoalModal() {
+    const done = getDailyDone();
+    const goal = getDailyGoal();
+    const pct = Math.min(100, Math.round((done / goal) * 100));
+    const streak = getDriverStreak();
+
+    const existing = document.getElementById('dailyGoalModal');
+    if (existing) existing.remove();
+
+    const div = document.createElement('div');
+    div.className = 'location-dialog';
+    div.id = 'dailyGoalModal';
+    div.innerHTML = `
+    <div class="location-dialog-inner" style="max-width:400px;">
+        <div class="modal-glow-top"></div>
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="font-size:2.5rem; margin-bottom:8px;">🎯</div>
+            <h3>Kunlik Maqsad</h3>
+            <p style="color:#64748b; font-size:0.85rem; margin-top:6px;">Bugungi natijalar</p>
+        </div>
+
+        <div class="dg-modal-stats">
+            <div class="dg-ms-item">
+                <div class="dg-ms-num" style="color:#22c55e;">${done}</div>
+                <div class="dg-ms-lab">Bajarildi</div>
+            </div>
+            <div class="dg-ms-item">
+                <div class="dg-ms-num" style="color:#38bdf8;">${goal}</div>
+                <div class="dg-ms-lab">Maqsad</div>
+            </div>
+            <div class="dg-ms-item">
+                <div class="dg-ms-num" style="color:#fbbf24;">${streak}🔥</div>
+                <div class="dg-ms-lab">Ketma-ket kun</div>
+            </div>
+            <div class="dg-ms-item">
+                <div class="dg-ms-num" style="color:#a78bfa;">${pct}%</div>
+                <div class="dg-ms-lab">Bajarildi</div>
+            </div>
+        </div>
+
+        <div class="dg-progress-wrap">
+            <div class="dg-bar-track" style="height:12px; border-radius:8px; background:rgba(255,255,255,0.06); overflow:hidden; margin:16px 0;">
+                <div style="height:100%; width:${pct}%; background:linear-gradient(90deg, #22c55e, #16a34a); transition:width 0.8s ease; border-radius:8px; box-shadow:0 0 10px rgba(34,197,94,0.4);"></div>
+            </div>
+            <div style="color:#94a3b8; font-size:0.82rem; text-align:center; margin-bottom:20px;">
+                ${done === 0 ? 'Hali buyurtma yo\'q – keling boshlaylik!' :
+                  pct >= 100 ? '🎉 MAQSADGA YETDINGIZ! Zo\'r ish!' :
+                  `Yana ${goal - done} ta buyurtma qoldi`}
+            </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="font-size:0.82rem; color:#64748b; display:block; margin-bottom:8px;">🎯 Kunlik maqsadni o'zgartiring:</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button onclick="changeGoalVal(-1)" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:white;font-size:1.2rem;cursor:pointer;">−</button>
+                <span id="goalValDisplay" style="flex:1;text-align:center;font-size:1.4rem;font-weight:800;color:#38bdf8;">${goal}</span>
+                <button onclick="changeGoalVal(1)" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:white;font-size:1.2rem;cursor:pointer;">+</button>
+            </div>
+        </div>
+
+        <button class="loc-allow-btn" onclick="saveGoalAndClose()" style="margin-bottom:8px;">✅ Saqlash</button>
+        <button class="loc-deny-btn" onclick="document.getElementById('dailyGoalModal').remove()">Yopish</button>
+    </div>`;
+    document.body.appendChild(div);
+}
+
+let _tempGoal = null;
+function changeGoalVal(delta) {
+    if (_tempGoal === null) _tempGoal = getDailyGoal();
+    _tempGoal = Math.max(1, Math.min(50, _tempGoal + delta));
+    const el = document.getElementById('goalValDisplay');
+    if (el) el.textContent = _tempGoal;
+}
+
+function saveGoalAndClose() {
+    if (_tempGoal !== null) {
+        setDailyGoal(_tempGoal);
+        _tempGoal = null;
+        updateDailyGoalUI();
+        showToast(`🎯 Yangi maqsad: ${getDailyGoal()} buyurtma!`, 'success');
+    }
+    const modal = document.getElementById('dailyGoalModal');
+    if (modal) modal.remove();
+}
+
+// Hook into refreshDriverStats to update daily goal
+const _origRefreshDriverStats = refreshDriverStats;
+function refreshDriverStats() {
+    _origRefreshDriverStats();
+    updateDailyGoalUI();
+}
+
+// Also call on init
+const _origInitDriverWidgets = initDriverWidgets;
+function initDriverWidgets() {
+    _origInitDriverWidgets();
+    updateDailyGoalUI();
+}
