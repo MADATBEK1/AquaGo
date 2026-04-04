@@ -38,9 +38,10 @@ const API_BASE = (() => {
     if (location.hostname === 'localhost' && !location.port) {
       return `https://web-production-12311.up.railway.app`;
     }
+    // Netlify yoki boshqa host – o'zining origin'idan foydalanadi
     return location.origin;
   }
-  return null; // will be resolved async
+  return null; // file:// mode – auto-detect
 })();
 
 let _resolvedBase = API_BASE;   // may be updated after auto-detect
@@ -113,55 +114,128 @@ async function _testAndConnect(base) {
 }
 
 
-// ── SSE ──────────────────────────────────────────────────
+// ── Real-time sync: SSE (lokal server) yoki Polling (Netlify) ───
+let _pollTimer = null;
+
 function _connectSSE() {
   if (!_resolvedBase || _sse) return;
 
   window._aquagoServer = _resolvedBase;  // expose for user.js / driver.js chat
 
-  _sse = new EventSource(_resolvedBase + '/api/events');
+  // Netlify yoki Cloudflare'da SSE ishlamaydi → polling ishlatamiz
+  const isNetlify = _resolvedBase.includes('netlify.app') ||
+                    _resolvedBase.includes('netlify.com') ||
+                    (!_resolvedBase.includes('localhost') &&
+                     !_resolvedBase.includes('127.0.0.1') &&
+                     !_resolvedBase.includes('192.168') &&
+                     !_resolvedBase.includes('railway.app'));
 
-  _sse.addEventListener('orders', e => {
-    try {
-      const orders = JSON.parse(e.data);
-      localStorage.setItem('aquago_orders', JSON.stringify(orders));
-      window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-    } catch { }
-  });
+  if (isNetlify) {
+    _startPolling();
+    return;
+  }
 
-  _sse.addEventListener('users', e => {
-    try {
-      let users = JSON.parse(e.data);
-      // MUHIM: serverdan kelgan bo'sh yoki demo'siz listni
-      // demo accountlar bilan to'ldirish kerak
-      users = _ensureDemoUsers(users);
+  // Lokal server – SSE ishlatamiz
+  try {
+    _sse = new EventSource(_resolvedBase + '/api/events');
+
+    _sse.addEventListener('orders', e => {
+      try {
+        const orders = JSON.parse(e.data);
+        localStorage.setItem('aquago_orders', JSON.stringify(orders));
+        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+      } catch { }
+    });
+
+    _sse.addEventListener('users', e => {
+      try {
+        let users = JSON.parse(e.data);
+        users = _ensureDemoUsers(users);
+        localStorage.setItem('aquago_users', JSON.stringify(users));
+      } catch { }
+    });
+
+    _sse.addEventListener('driver-location', e => {
+      try {
+        const data = JSON.parse(e.data);
+        window.dispatchEvent(new CustomEvent('aquago_driver_location', { detail: data }));
+      } catch { }
+    });
+
+    _sse.addEventListener('message', e => {
+      try {
+        const msg = JSON.parse(e.data);
+        window.dispatchEvent(new CustomEvent('aquago_message', { detail: msg }));
+      } catch { }
+    });
+
+    _sse.onerror = () => {
+      _sse.close();
+      _sse = null;
+      _online = false;
+      window._aquagoServer = null;
+      // SSE ishlamasa polling'ga o'tamiz
+      _startPolling();
+    };
+  } catch {
+    _startPolling();
+  }
+}
+
+// ── Polling (Netlify serverless uchun) ───────────────────
+let _lastMsgTs = 0;
+
+function _startPolling() {
+  if (_pollTimer) return; // allaqachon ishlamoqda
+  console.log('[AquaGo] Polling mode (Netlify)');
+  _poll();
+  _pollTimer = setInterval(_poll, 4000);
+}
+
+async function _poll() {
+  if (!_resolvedBase || !_online) return;
+  try {
+    const r = await fetch(_resolvedBase + '/api/events');
+    if (!r.ok) { _online = false; return; }
+    const data = await r.json();
+
+    // Orders
+    if (Array.isArray(data.orders)) {
+      localStorage.setItem('aquago_orders', JSON.stringify(data.orders));
+      window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: data.orders }));
+    }
+
+    // Users
+    if (Array.isArray(data.users)) {
+      const users = _ensureDemoUsers(data.users);
       localStorage.setItem('aquago_users', JSON.stringify(users));
-    } catch { }
-  });
+    }
 
-  // Driver GPS → user map real-time
-  _sse.addEventListener('driver-location', e => {
-    try {
-      const data = JSON.parse(e.data);
-      window.dispatchEvent(new CustomEvent('aquago_driver_location', { detail: data }));
-    } catch { }
-  });
+    // Messages – faqat yangi xabarlarni yuborish
+    if (Array.isArray(data.messages)) {
+      const newMsgs = data.messages.filter(m => m.ts > _lastMsgTs);
+      if (newMsgs.length > 0) {
+        _lastMsgTs = Math.max(...newMsgs.map(m => m.ts));
+        for (const msg of newMsgs) {
+          window.dispatchEvent(new CustomEvent('aquago_message', { detail: msg }));
+        }
+      }
+    }
 
-  // Chat message
-  _sse.addEventListener('message', e => {
-    try {
-      const msg = JSON.parse(e.data);
-      window.dispatchEvent(new CustomEvent('aquago_message', { detail: msg }));
-    } catch { }
-  });
-
-  _sse.onerror = () => {
-    _sse.close();
-    _sse = null;
+    // Driver locations
+    if (data.driverLocations) {
+      for (const [driverId, loc] of Object.entries(data.driverLocations)) {
+        window.dispatchEvent(new CustomEvent('aquago_driver_location', {
+          detail: { driverId, ...loc }
+        }));
+      }
+    }
+  } catch {
     _online = false;
-    window._aquagoServer = null;
+    clearInterval(_pollTimer);
+    _pollTimer = null;
     setTimeout(_detectServer, 5000);
-  };
+  }
 }
 
 

@@ -8,10 +8,10 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# Netlify dagi asosiy sahifani (/) landing.html ga yo'naltiramiz
+# Asosiy sahifa - index.html (landing page)
 [[redirects]]
   from = "/"
-  to = "/landing.html"
+  to = "/index.html"
   status = 200
 
 [[headers]]
