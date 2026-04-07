@@ -142,7 +142,7 @@ function animateCounter(el, target) {
 window.addEventListener('DOMContentLoaded', () => {
     currentUser = DB.getCurrentUser();
     if (!currentUser || currentUser.role !== 'user') {
-        window.location.href = 'index.html'; return;
+        window.location.href = 'app.html'; return;
     }
     initParticles();
     initLiveClock();
@@ -167,7 +167,7 @@ function initUserDashboard() {
     else greetPrefix = 'Xayrli tun';
 
     document.getElementById('greetingText').textContent =
-        `${greetPrefix}, ${currentUser.name.split(' ')[0]}! 👋`;
+        `${greetPrefix}, ${currentUser.name.split(' ')[0]}!`;
 
     refreshStats();
     renderOrdersList();
@@ -183,6 +183,28 @@ function initUserDashboard() {
     } else {
         showLocationDialog();
     }
+
+    // Force sync orders every 5 seconds (only if server available)
+    setInterval(() => {
+        if (window._aquagoServer && _online) {
+            fetch(window._aquagoServer + '/api/orders', {
+                headers: { 'Cache-Control': 'no-cache' }
+            }).then(r => r.json()).then(orders => {
+                if (Array.isArray(orders)) {
+                    const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+                    if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
+                        localStorage.setItem('aquago_orders', JSON.stringify(orders));
+                        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+                        console.log('[User] Force synced orders:', orders.length);
+                    }
+                }
+            }).catch(() => {});
+        } else {
+            // HTML mode - just refresh from localStorage
+            const orders = DB.getOrders();
+            window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+        }
+    }, 5000);
 }
 
 // ─── LOCATION ────────────────────────────────────────
@@ -763,6 +785,34 @@ function openHistoryModal() {
 function closeHistoryModal() {
     document.getElementById('historyModal').classList.add('hidden');
 }
+
+// Clear all history function
+function clearAllHistory() {
+    if (confirm('Buyurtmalar tarixini to\'liq o\'chirmoqchimisiz? Bu amal ortga qaytarilmaydi!')) {
+        // Clear user orders from database
+        const userOrders = DB.getUserOrders(currentUser.id);
+        userOrders.forEach(order => {
+            const index = dbOrders.findIndex(o => o.id === order.id);
+            if (index >= 0) {
+                dbOrders.splice(index, 1);
+            }
+        });
+        
+        // Save to database
+        save();
+        push('orders', dbOrders);
+        
+        // Refresh the history display
+        renderHistoryList();
+        renderHistoryStats();
+        
+        // Show success message
+        showToast('Tarix to\'liq tozalandi!', 'success');
+        
+        console.log('[AquaGo] History cleared for user:', currentUser.id);
+    }
+}
+
 function filterHistory(filter) {
     _historyFilter = filter;
     document.querySelectorAll('.hft-btn').forEach(b => b.classList.remove('active'));
@@ -935,7 +985,7 @@ function logout() {
     clearInterval(orderCheckInterval);
     closeChatPanel();
     DB.clearCurrentUser();
-    window.location.href = 'index.html';
+    window.location.href = 'app.html';
 }
 
 // ─── TOAST ────────────────────────────────────────────

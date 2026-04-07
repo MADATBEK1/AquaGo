@@ -14,6 +14,18 @@
     overflow: hidden;
 }
 
+/* Water canvas background */
+.water-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
 
 /* Driver specific nav elements */
 .driver-nav {
@@ -1736,4 +1748,4 @@
     .dg-ring-wrap { width: 56px; height: 56px; }
     .dg-ring-svg { width: 56px; height: 56px; }
     .dg-done { font-size: 1.3rem; }
-}
+}

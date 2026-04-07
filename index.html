@@ -97,22 +97,6 @@
             padding: 120px 40px 80px;
             position: relative; z-index: 1;
         }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 8px 20px;
-            background: rgba(14,165,233,0.08);
-            border: 1px solid rgba(14,165,233,0.2);
-            border-radius: 50px; font-size: 0.82rem; font-weight: 600;
-            color: var(--primary); margin-bottom: 28px;
-            animation: badgePulse 3s ease-in-out infinite;
-        }
-        .badge-dot {
-            width: 7px; height: 7px; background: var(--green);
-            border-radius: 50%; animation: dotBlink 1.5s ease infinite;
-        }
-        @keyframes badgePulse { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,233,0)} 50%{box-shadow:0 0 15px rgba(14,165,233,0.15)} }
-        @keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
         .hero-title {
             font-size: clamp(3rem, 8vw, 6rem);
             font-weight: 900;
@@ -178,7 +162,7 @@
         }
         .hstat-lab { font-size: 0.78rem; color: var(--text2); margin-top: 4px; font-weight: 500; }
 
-        /* ── Floating water drops ── */
+        /* ── Enhanced Floating water drops with advanced effects */
         .floating-drops {
             position: absolute; inset: 0; overflow: hidden; pointer-events: none;
         }
@@ -186,10 +170,89 @@
             position: absolute; font-size: 1.5rem;
             animation: floatDrop linear infinite;
             opacity: 0.15;
+            transition: all 0.3s ease;
+        }
+        .fdrop:hover {
+            transform: scale(1.5);
+            opacity: 0.4;
+            filter: none !important;
         }
         @keyframes floatDrop {
-            0% { transform: translateY(110vh) rotate(0deg); opacity: 0.15; }
-            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+            0% { 
+                transform: translateY(110vh) rotate(0deg) scale(0.8); 
+                opacity: 0; 
+            }
+            10% {
+                opacity: 0.2;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% { 
+                transform: translateY(-10vh) rotate(360deg) scale(1.2); 
+                opacity: 0; 
+            }
+        }
+
+        /* Water ripple effect */
+        .water-ripple {
+            position: absolute;
+            border: 2px solid rgba(14, 165, 233, 0.3);
+            border-radius: 50%;
+            animation: rippleEffect 2s ease-out;
+            pointer-events: none;
+        }
+        @keyframes rippleEffect {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* Wave animation for hero section */
+        .hero::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path fill="%230ea5e9" fill-opacity="0.1" d="M0,60 C200,90 400,30 600,60 C800,90 1000,30 1200,60 L1200,120 L0,120 Z"></path></svg>');
+            background-size: cover;
+            animation: waveMove 8s linear infinite;
+        }
+        @keyframes waveMove {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 1200px; }
+        }
+
+        /* Glow effect for water elements */
+        .water-glow {
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(14, 165, 233, 0.6); }
+        }
+
+        /* Interactive hover effects */
+        .btn-hero:hover {
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* ── Section Layout ── */
@@ -469,44 +532,85 @@
     <section>
         <div class="floating-drops" id="floatingDrops"></div>
         <div class="hero">
+            <!-- Modern Status Badge -->
+            <div class="hero-status">
+                <div class="status-dot"></div>
+                <span>Hozircha ishlayapti</span>
+                <div class="status-pulse"></div>
+            </div>
 
             <h1 class="hero-title">
                 <span class="grad-blue">AquaGo</span><br />
                 Suv Yetkazish<br />
                 <span style="font-weight:300; font-size:0.65em; letter-spacing:0;">Platformasi</span>
             </h1>
+            
             <p class="hero-subtitle">
                 Bir tugma bosish bilan uyingizga toza ichimlik suvi yetkazib beriladi. 
                 Real-time kuzatuv, onlayn to'lov va 15 daqiqada yetkazish.
             </p>
+            
+            <!-- Interactive CTA Buttons -->
             <div class="hero-cta">
-                <a href="app.html" class="btn-hero">
-                    💧 Hoziroq Buyurtma Bering
+                <a href="app.html" class="btn-hero primary-cta">
+                    <span class="cta-icon"></span>
+                    <span class="cta-text">
+                        <strong>Hoziroq Buyurtma Bering</strong>
+                        <small>5 daqiqa ichida yetkazamiz</small>
+                    </span>
+                    <span class="cta-arrow">></span>
                 </a>
-                <a href="#features" class="btn-ghost">
-                    📖 Ko'proq Bilish
+                <a href="#features" class="btn-ghost secondary-cta">
+                    <span class="cta-icon">?</span>
+                    <span class="cta-text">
+                        <strong>Ko'proq Bilish</strong>
+                        <small>Qanday ishlashini ko'ring</small>
+                    </span>
                 </a>
             </div>
+            
+            <!-- Enhanced Stats -->
             <div class="hero-stats">
                 <div class="hstat">
-                    <div class="hstat-num">500+</div>
+                    <div class="hstat-icon"> </div>
+                    <div class="hstat-num">1,500+</div>
                     <div class="hstat-lab">Foydalanuvchilar</div>
                 </div>
                 <div class="hstat">
-                    <div class="hstat-num">15 min</div>
-                    <div class="hstat-lab">O'rtacha yetkazish</div>
+                    <div class="hstat-icon"> </div>
+                    <div class="hstat-num">3,200</div>
+                    <div class="hstat-lab">Yetkazilgan buyurtmalar</div>
                 </div>
                 <div class="hstat">
+                    <div class="hstat-icon"> </div>
                     <div class="hstat-num">50+</div>
                     <div class="hstat-lab">Faol suvchilar</div>
                 </div>
                 <div class="hstat">
-                    <div class="hstat-num">4.9⭐</div>
-                    <div class="hstat-lab">O'rtacha reyting</div>
+                    <div class="hstat-icon"> </div>
+                    <div class="hstat-num">98%</div>
+                    <div class="hstat-lab">Mijoz qoniqishi</div>
                 </div>
             </div>
+            
+            <!-- Trust Indicators -->
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <span class="badge-icon"> </span>
+                    <span class="badge-text">Tez Yetkazish</span>
+                </div>
+                <div class="trust-badge">
+                    <span class="badge-icon"> </span>
+                    <span class="badge-text">Sifatli Suv</span>
+                </div>
+                <div class="trust-badge">
+                    <span class="badge-icon"> </span>
+                    <span class="badge-text">24/7 Xizmat</span>
+                </div>
+            </div>
+            
             <div class="scroll-indicator">
-                <div class="scroll-arrow">⌄</div>
+                <div class="scroll-arrow">?</div>
                 <span>Pastga suring</span>
             </div>
         </div>
@@ -843,17 +947,289 @@
         }
         animate();
 
-        // Floating drops
+        // Load modern hero styles
+        const heroStyles = document.createElement('link');
+        heroStyles.rel = 'stylesheet';
+        heroStyles.href = 'hero-styles.css?v=' + Date.now();
+        document.head.appendChild(heroStyles);
+
+        // AGGRESSIVE CACHE CLEARING AND GRANT BADGE REMOVAL
+        const FORCE_REMOVE_GRANT = () => {
+            console.log('[AquaGo] Aggressive grant badge removal started...');
+            
+            // Method 1: Remove by text content
+            document.querySelectorAll('*').forEach(el => {
+                if (el.textContent && (
+                    el.textContent.includes('Hokim') || 
+                    el.textContent.includes('Granti') || 
+                    el.textContent.includes('Startup') ||
+                    el.textContent.includes('Loyiha 2026')
+                )) {
+                    console.log('[AquaGo] Removing element by text:', el.textContent);
+                    el.remove();
+                }
+            });
+            
+            // Method 2: Remove by class name patterns
+            const suspiciousElements = document.querySelectorAll([
+                '[class*="badge"]',
+                '[class*="grant"]', 
+                '[class*="hokim"]',
+                '[class*="startup"]',
+                '[class*="loyiha"]',
+                '.hero-badge',
+                '.status-badge'
+            ].join(','));
+            
+            suspiciousElements.forEach(el => {
+                console.log('[AquaGo] Removing suspicious element:', el.className);
+                el.remove();
+            });
+            
+            // Method 3: Clear localStorage
+            localStorage.removeItem('aquago_cache_version');
+            localStorage.removeItem('grant_badge_shown');
+            
+            // Method 4: Clear session storage
+            sessionStorage.clear();
+            
+            // Method 5: Remove any injected elements
+            document.querySelectorAll('script[src*="grant"], script[src*="hokim"]').forEach(el => el.remove());
+            
+            console.log('[AquaGo] Grant badge removal completed');
+        };
+
+        // Run immediately and continuously
+        FORCE_REMOVE_GRANT();
+        setInterval(FORCE_REMOVE_GRANT, 500);
+        
+        // Also run on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', FORCE_REMOVE_GRANT);
+        window.addEventListener('load', FORCE_REMOVE_GRANT);
+        
+        // Force reload with cache bust
+        if (!location.search.includes('nocache=')) {
+            const timestamp = Date.now();
+            console.log('[AquaGo] Force reloading with cache bust...');
+            setTimeout(() => {
+                location.href = location.origin + location.pathname + '?nocache=' + timestamp;
+            }, 100);
+            return;
+        }
+
+        // ADVANCED WATER ANIMATION SYSTEM
+        class AquaAnimationSystem {
+            constructor() {
+                this.canvas = document.getElementById('bgCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.waves = [];
+                this.bubbles = [];
+                this.ripples = [];
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.init();
+            }
+
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX;
+                    this.mouseY = e.clientY;
+                });
+                window.addEventListener('click', (e) => this.createRipple(e.clientX, e.clientY));
+                
+                this.createParticles();
+                this.createWaves();
+                this.createBubbles();
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            createParticles() {
+                for (let i = 0; i < 150; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 3 + 1,
+                        speedX: (Math.random() - 0.5) * 0.5,
+                        speedY: Math.random() * 0.5 + 0.2,
+                        opacity: Math.random() * 0.5 + 0.2,
+                        color: Math.random() > 0.5 ? '#0ea5e9' : '#06b6d4'
+                    });
+                }
+            }
+
+            createWaves() {
+                for (let i = 0; i < 3; i++) {
+                    this.waves.push({
+                        y: this.canvas.height * (0.3 + i * 0.2),
+                        amplitude: 30 + Math.random() * 20,
+                        frequency: 0.01 + Math.random() * 0.01,
+                        phase: Math.random() * Math.PI * 2,
+                        speed: 0.02 + Math.random() * 0.02,
+                        opacity: 0.05 + Math.random() * 0.03
+                    });
+                }
+            }
+
+            createBubbles() {
+                setInterval(() => {
+                    if (this.bubbles.length < 20) {
+                        this.bubbles.push({
+                            x: Math.random() * this.canvas.width,
+                            y: this.canvas.height + 50,
+                            size: Math.random() * 15 + 5,
+                            speed: Math.random() * 2 + 1,
+                            wobble: Math.random() * 2 - 1,
+                            opacity: 0.3 + Math.random() * 0.3
+                        });
+                    }
+                }, 500);
+            }
+
+            createRipple(x, y) {
+                this.ripples.push({
+                    x: x,
+                    y: y,
+                    radius: 0,
+                    maxRadius: 100,
+                    opacity: 0.5,
+                    speed: 2
+                });
+            }
+
+            updateParticles() {
+                this.particles.forEach(particle => {
+                    particle.x += particle.speedX;
+                    particle.y += particle.speedY;
+
+                    // Mouse interaction
+                    const dx = this.mouseX - particle.x;
+                    const dy = this.mouseY - particle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 100) {
+                        particle.x -= dx * 0.01;
+                        particle.y -= dy * 0.01;
+                    }
+
+                    // Reset particle if it goes off screen
+                    if (particle.y > this.canvas.height) {
+                        particle.y = -10;
+                        particle.x = Math.random() * this.canvas.width;
+                    }
+                    if (particle.x < 0) particle.x = this.canvas.width;
+                    if (particle.x > this.canvas.width) particle.x = 0;
+                });
+            }
+
+            updateWaves() {
+                this.waves.forEach(wave => {
+                    wave.phase += wave.speed;
+                });
+            }
+
+            updateBubbles() {
+                this.bubbles = this.bubbles.filter(bubble => {
+                    bubble.y -= bubble.speed;
+                    bubble.x += Math.sin(bubble.y * 0.01) * bubble.wobble;
+                    return bubble.y > -50;
+                });
+            }
+
+            updateRipples() {
+                this.ripples = this.ripples.filter(ripple => {
+                    ripple.radius += ripple.speed;
+                    ripple.opacity -= 0.01;
+                    return ripple.opacity > 0;
+                });
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw waves
+                this.waves.forEach(wave => {
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = `rgba(14, 165, 233, ${wave.opacity})`;
+                    this.ctx.lineWidth = 2;
+                    
+                    for (let x = 0; x <= this.canvas.width; x += 5) {
+                        const y = wave.y + Math.sin(x * wave.frequency + wave.phase) * wave.amplitude;
+                        if (x === 0) {
+                            this.ctx.moveTo(x, y);
+                        } else {
+                            this.ctx.lineTo(x, y);
+                        }
+                    }
+                    this.ctx.stroke();
+                });
+
+                // Draw particles
+                this.particles.forEach(particle => {
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = particle.color + Math.floor(particle.opacity * 255).toString(16).padStart(2, '0');
+                    this.ctx.fill();
+                });
+
+                // Draw bubbles
+                this.bubbles.forEach(bubble => {
+                    this.ctx.beginPath();
+                    this.ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = `rgba(255, 255, 255, ${bubble.opacity})`;
+                    this.ctx.lineWidth = 1;
+                    this.ctx.stroke();
+                    
+                    // Bubble highlight
+                    this.ctx.beginPath();
+                    this.ctx.arc(bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, bubble.size * 0.2, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${bubble.opacity * 0.8})`;
+                    this.ctx.fill();
+                });
+
+                // Draw ripples
+                this.ripples.forEach(ripple => {
+                    this.ctx.beginPath();
+                    this.ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = `rgba(14, 165, 233, ${ripple.opacity})`;
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+                });
+            }
+
+            animate() {
+                this.updateParticles();
+                this.updateWaves();
+                this.updateBubbles();
+                this.updateRipples();
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize advanced water animation system
+        const waterAnimation = new AquaAnimationSystem();
+
+        // Enhanced floating drops with water emojis and effects
         const fd = document.getElementById('floatingDrops');
-        for (let i = 0; i < 12; i++) {
+        const waterEmojis = ['?'];
+        for (let i = 0; i < 20; i++) {
             const d = document.createElement('div');
             d.className = 'fdrop';
-            d.textContent = '💧';
+            d.textContent = waterEmojis[Math.floor(Math.random() * waterEmojis.length)];
             d.style.cssText = `
                 left:${Math.random()*100}%;
-                animation-duration:${8 + Math.random()*8}s;
-                animation-delay:${Math.random()*8}s;
-                font-size:${0.8 + Math.random()*1.2}rem;
+                animation-duration:${6 + Math.random()*10}s;
+                animation-delay:${Math.random()*10}s;
+                font-size:${0.6 + Math.random()*1.4}rem;
+                opacity:${0.1 + Math.random()*0.3};
+                filter:blur(${Math.random()*2}px);
             `;
             fd.appendChild(d);
         }

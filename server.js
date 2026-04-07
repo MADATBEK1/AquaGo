@@ -249,9 +249,9 @@ http.createServer(handler).listen(PORT, '0.0.0.0', async () => {
     console.log('║                                                        ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
 
-    // Auto-open browser on computer
-    exec(`start chrome --app=http://localhost:${PORT}`, err => {
-        if (err) exec(`start http://localhost:${PORT}`);
+    // Auto-open browser on computer (app.html = login page)
+    exec(`start chrome --app=http://localhost:${PORT}/app.html`, err => {
+        if (err) exec(`start http://localhost:${PORT}/app.html`);
     });
 
     // ── Cloudflare Tunnel: boshqa tarmoqdan kirish ────────────

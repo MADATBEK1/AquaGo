@@ -2,31 +2,69 @@
   publish = "."
   functions = "netlify/functions"
 
-# API redirects - barcha /api/* so'rovlar serverless functionga yo'naltiriladi
+# API redirects
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# Asosiy sahifa - index.html (landing page)
+# /index.html → /app ga yo'naltirish (301 permanent redirect)
+[[redirects]]
+  from = "/index.html"
+  to = "/app"
+  status = 301
+  force = true
+
+# Asosiy sahifa ham /app ga yo'naltirish
 [[redirects]]
   from = "/"
-  to = "/index.html"
-  status = 200
+  to = "/app"
+  status = 301
+  force = true
 
+# ── CORS Headers ──────────────────────────────────────────────
 [[headers]]
   for = "/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     X-Frame-Options = "SAMEORIGIN"
 
+# ── Service Worker - hech qachon keshlanmasin ─────────────────
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "no-cache"
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+    Pragma = "no-cache"
     Service-Worker-Allowed = "/"
 
+# ── HTML sahifalar - hech qachon keshlanmasin ─────────────────
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+    Pragma = "no-cache"
+
+# ── JS fayllar - yangi deploy keyin yangilansin ───────────────
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+# ── CSS fayllar - yangi deploy keyin yangilansin ──────────────
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+
+# ── Manifest ──────────────────────────────────────────────────
 [[headers]]
   for = "/manifest.json"
   [headers.values]
     Content-Type = "application/manifest+json"
+    Cache-Control = "no-cache"

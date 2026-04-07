@@ -67,6 +67,21 @@ async function _detectServer() {
   const savedTunnel = localStorage.getItem('aquago_tunnel_url');
   if (savedTunnel) candidates.unshift(savedTunnel);
 
+  // Add current origin if not file:// and not localhost
+  if (location.protocol !== 'file:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    candidates.unshift(location.origin);
+  }
+
+  // For HTML file mode - try to work without server first
+  if (location.protocol === 'file:') {
+    console.log('[AquaGo] HTML file mode - working offline');
+    window._aquagoServer = null;
+    _online = false;
+    // Still try to connect to server in background
+    setTimeout(() => _detectServer(), 1000);
+    return;
+  }
+
   for (const base of candidates) {
     const ok = await _testAndConnect(base);
     if (ok) {
@@ -114,7 +129,7 @@ async function _testAndConnect(base) {
 }
 
 
-// ── Real-time sync: SSE (lokal server) yoki Polling (Netlify) ───
+// ── Real-time sync: SSE (server) yoki Polling (Netlify) ───
 let _pollTimer = null;
 
 function _connectSSE() {
@@ -122,13 +137,10 @@ function _connectSSE() {
 
   window._aquagoServer = _resolvedBase;  // expose for user.js / driver.js chat
 
-  // Netlify yoki Cloudflare'da SSE ishlamaydi → polling ishlatamiz
+  // Faqat Netlify'da SSE ishlamaydi → polling ishlatamiz
+  // Railway, localhost, LAN – SSE ishlaydi
   const isNetlify = _resolvedBase.includes('netlify.app') ||
-                    _resolvedBase.includes('netlify.com') ||
-                    (!_resolvedBase.includes('localhost') &&
-                     !_resolvedBase.includes('127.0.0.1') &&
-                     !_resolvedBase.includes('192.168') &&
-                     !_resolvedBase.includes('railway.app'));
+                    _resolvedBase.includes('netlify.com');
 
   if (isNetlify) {
     _startPolling();
@@ -187,54 +199,78 @@ let _lastMsgTs = 0;
 
 function _startPolling() {
   if (_pollTimer) return; // allaqachon ishlamoqda
-  console.log('[AquaGo] Polling mode (Netlify)');
+  console.log('[AquaGo] Polling mode (Real-time sync)');
   _poll();
-  _pollTimer = setInterval(_poll, 4000);
+  _pollTimer = setInterval(_poll, 2000); // More frequent polling for better sync
 }
 
 async function _poll() {
-  if (!_resolvedBase || !_online) return;
+  if (!_resolvedBase) return; // Try to poll even if _online is false to reconnect
+  
   try {
-    const r = await fetch(_resolvedBase + '/api/events');
-    if (!r.ok) { _online = false; return; }
-    const data = await r.json();
-
-    // Orders
-    if (Array.isArray(data.orders)) {
-      localStorage.setItem('aquago_orders', JSON.stringify(data.orders));
-      window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: data.orders }));
+    // Orders ni to'g'ridan-to'g'ri /api/orders dan olish
+    const r = await fetch(_resolvedBase + '/api/orders', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (!r.ok) { 
+      _online = false; 
+      return; 
+    }
+    const orders = await r.json();
+    if (Array.isArray(orders)) {
+      const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+      // Force update if different
+      if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
+        localStorage.setItem('aquago_orders', JSON.stringify(orders));
+        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+        console.log('[AquaGo] Orders synced:', orders.length, 'orders');
+      }
     }
 
-    // Users
-    if (Array.isArray(data.users)) {
-      const users = _ensureDemoUsers(data.users);
+    // Users ni /api/users dan olish
+    const ru = await fetch(_resolvedBase + '/api/users', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (ru.ok) {
+      const users = _ensureDemoUsers(await ru.json());
       localStorage.setItem('aquago_users', JSON.stringify(users));
     }
 
-    // Messages – faqat yangi xabarlarni yuborish
-    if (Array.isArray(data.messages)) {
-      const newMsgs = data.messages.filter(m => m.ts > _lastMsgTs);
-      if (newMsgs.length > 0) {
-        _lastMsgTs = Math.max(...newMsgs.map(m => m.ts));
-        for (const msg of newMsgs) {
-          window.dispatchEvent(new CustomEvent('aquago_message', { detail: msg }));
+    // Messages - faqat yangi xabarlarni yuborish
+    const rm = await fetch(_resolvedBase + '/api/messages');
+    if (rm.ok) {
+      const msgs = await rm.json();
+      if (Array.isArray(msgs)) {
+        const newMsgs = msgs.filter(m => m.ts > _lastMsgTs);
+        if (newMsgs.length > 0) {
+          _lastMsgTs = Math.max(...newMsgs.map(m => m.ts));
+          for (const msg of newMsgs) {
+            window.dispatchEvent(new CustomEvent('aquago_message', { detail: msg }));
+          }
         }
       }
     }
 
     // Driver locations
-    if (data.driverLocations) {
-      for (const [driverId, loc] of Object.entries(data.driverLocations)) {
+    const rd = await fetch(_resolvedBase + '/api/driver-location');
+    if (rd.ok) {
+      const locs = await rd.json();
+      for (const [driverId, loc] of Object.entries(locs)) {
         window.dispatchEvent(new CustomEvent('aquago_driver_location', {
           detail: { driverId, ...loc }
         }));
       }
     }
-  } catch {
+    
+    // Mark as online if we got here
+    _online = true;
+  } catch (err) {
+    console.warn('[AquaGo] Poll error:', err);
     _online = false;
     clearInterval(_pollTimer);
     _pollTimer = null;
-    setTimeout(_detectServer, 5000);
+    // Try to reconnect after 3 seconds
+    setTimeout(_detectServer, 3000);
   }
 }
 
@@ -317,13 +353,19 @@ const DB = {
     window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
     _put('/api/orders', orders);
   },
+  // Add order to localStorage with cross-tab sync
   addOrder(order) {
     const orders = this.getOrders();
     orders.unshift(order);
     localStorage.setItem('aquago_orders', JSON.stringify(orders));
+    
+    // Trigger cross-tab sync event
     window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-    // Server: just add this order
-    _post('/api/orders', order);
+    
+    // Server: just add this order (if online)
+    if (_online && _resolvedBase) {
+      _post('/api/orders', order);
+    }
     return order;
   },
   getOrderById(id) { return this.getOrders().find(o => o.id === id); },

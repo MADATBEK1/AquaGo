@@ -30,8 +30,8 @@
         </div>
     </div>
 
-    <!-- Animated Particles Background -->
-    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <!-- Animated Water Background -->
+    <canvas id="bgCanvas" class="water-canvas"></canvas>
 
     <!-- Top Nav -->
     <nav class="top-nav">
@@ -474,6 +474,10 @@
                 <h3>Buyurtmalar tarixi</h3>
                 <button class="history-close-btn" onclick="closeHistoryModal()">✕</button>
             </div>
+            <!-- Clear History Button -->
+            <button class="loc-deny-btn" onclick="clearAllHistory()" style="margin:12px 0; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444;">
+                🗑️ Tarixni to'liq o'chirish
+            </button>
             <!-- Filter tabs -->
             <div class="history-filter-tabs">
                 <button class="hft-btn active" id="hft-all" onclick="filterHistory('all')">Hammasi</button>
@@ -638,6 +642,113 @@
     <script src="js/storage.js"></script>
     <script src="js/user.js"></script>
     <script src="js/titlebar.js"></script>
+    
+    <!-- Water Animation Script -->
+    <script>
+        // Enhanced water animation for user dashboard
+        class UserWaterAnimation {
+            constructor() {
+                this.canvas = document.getElementById('bgCanvas');
+                if (!this.canvas) return;
+                
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.bubbles = [];
+                this.init();
+            }
+
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                
+                // Create water particles
+                for (let i = 0; i < 80; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2.5 + 0.5,
+                        speedX: (Math.random() - 0.5) * 0.4,
+                        speedY: Math.random() * 0.4 + 0.1,
+                        opacity: Math.random() * 0.4 + 0.1,
+                        color: Math.random() > 0.5 ? '#0ea5e9' : '#06b6d4'
+                    });
+                }
+                
+                // Create bubbles periodically
+                setInterval(() => {
+                    if (this.bubbles.length < 15) {
+                        this.bubbles.push({
+                            x: Math.random() * this.canvas.width,
+                            y: this.canvas.height + 20,
+                            size: Math.random() * 10 + 3,
+                            speed: Math.random() * 1.5 + 0.5,
+                            wobble: Math.random() * 1.5 - 0.75,
+                            opacity: Math.random() * 0.3 + 0.2
+                        });
+                    }
+                }, 800);
+                
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update and draw particles
+                this.particles.forEach(particle => {
+                    particle.x += particle.speedX;
+                    particle.y += particle.speedY;
+                    
+                    if (particle.y > this.canvas.height) {
+                        particle.y = -10;
+                        particle.x = Math.random() * this.canvas.width;
+                    }
+                    if (particle.x < 0) particle.x = this.canvas.width;
+                    if (particle.x > this.canvas.width) particle.x = 0;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = particle.color + Math.floor(particle.opacity * 255).toString(16).padStart(2, '0');
+                    this.ctx.fill();
+                });
+                
+                // Update and draw bubbles
+                this.bubbles = this.bubbles.filter(bubble => {
+                    bubble.y -= bubble.speed;
+                    bubble.x += Math.sin(bubble.y * 0.01) * bubble.wobble;
+                    
+                    if (bubble.y > -20) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                        this.ctx.strokeStyle = `rgba(255, 255, 255, ${bubble.opacity})`;
+                        this.ctx.lineWidth = 1;
+                        this.ctx.stroke();
+                        
+                        // Bubble highlight
+                        this.ctx.beginPath();
+                        this.ctx.arc(bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, bubble.size * 0.15, 0, Math.PI * 2);
+                        this.ctx.fillStyle = `rgba(255, 255, 255, ${bubble.opacity * 0.8})`;
+                        this.ctx.fill();
+                        
+                        return true;
+                    }
+                    return false;
+                });
+                
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize water animation when page loads
+        window.addEventListener('load', () => {
+            new UserWaterAnimation();
+        });
+    </script>
 </body>
 
 </html>

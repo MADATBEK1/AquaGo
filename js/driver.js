@@ -33,7 +33,7 @@ const DEFAULT_LNG = 61.3098;
 window.addEventListener('DOMContentLoaded', () => {
     currentDriver = DB.getCurrentUser();
     if (!currentDriver || currentDriver.role !== 'driver') {
-        window.location.href = 'index.html';
+        window.location.href = 'app.html';
         return;
     }
     initDriverDashboard();
@@ -45,6 +45,15 @@ function initDriverDashboard() {
     initDriverMap();
     startGPSWatch();
     initDriverWidgets();   // ⭐ NEW WIDGETS
+
+    // 🟢 Suvchi kirganda avtomatik onlayn bo'lsin
+    setTimeout(() => {
+        const toggle = document.getElementById('onlineToggle');
+        if (toggle && !toggle.checked) {
+            toggle.checked = true;
+            toggleOnlineStatus(true);
+        }
+    }, 1500);
 
     pollInterval = setInterval(checkForNewOrders, 1000);
 
@@ -60,6 +69,28 @@ function initDriverDashboard() {
     });
 
     showExistingOrdersOnMap();
+
+    // Force sync orders every 5 seconds (only if server available)
+    setInterval(() => {
+        if (window._aquagoServer && _online) {
+            fetch(window._aquagoServer + '/api/orders', {
+                headers: { 'Cache-Control': 'no-cache' }
+            }).then(r => r.json()).then(orders => {
+                if (Array.isArray(orders)) {
+                    const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+                    if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
+                        localStorage.setItem('aquago_orders', JSON.stringify(orders));
+                        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+                        console.log('[Driver] Force synced orders:', orders.length);
+                    }
+                }
+            }).catch(() => {});
+        } else {
+            // HTML mode - just refresh from localStorage
+            const orders = DB.getOrders();
+            window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+        }
+    }, 5000);
 }
 
 // ============================================================
@@ -838,7 +869,7 @@ function logout() {
     clearInterval(activeOrderTimer);
     clearInterval(alertTimer);
     DB.clearCurrentUser();
-    window.location.href = 'index.html';
+    window.location.href = 'app.html';
 }
 
 // ============================================================

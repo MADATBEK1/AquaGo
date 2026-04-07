@@ -2,12 +2,13 @@
    AquaGo – User Dashboard Styles  (v3 ULTRA PREMIUM)
    =================================================== */
 
-/* ── Particle Canvas ─────────────────────────────── */
-.particle-canvas {
+/* ── Water Canvas Background ─────────────────────────────── */
+.water-canvas {
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
+    opacity: 0.7;
 }
 
 /* ── Top Nav Enhanced ─────────────────────────────── */
@@ -2679,4 +2680,4 @@ body.light-theme .price-calculator {
     .quick-actions { grid-template-columns: repeat(3, 1fr) !important; }
     .loyalty-rewards-grid { grid-template-columns: repeat(3, 1fr) !important; }
     .act-summary-grid { grid-template-columns: repeat(2, 1fr) !important; }
-}
+}

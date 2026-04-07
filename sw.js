@@ -1,11 +1,6 @@
-// AquaGo Service Worker v2 - Offline ishlash + Landing sahifa
-const CACHE_NAME = 'aquago-v2';
-const ASSETS = [
-    '/',
-    '/index.html',
-    '/landing.html',
-    '/user.html',
-    '/driver.html',
+// AquaGo Service Worker v10 - Har doim yangi versiya yuklanadi
+const CACHE_NAME = 'aquago-v10';
+const STATIC_ASSETS = [
     '/css/style.css',
     '/css/user.css',
     '/css/driver.css',
@@ -17,41 +12,73 @@ const ASSETS = [
     '/js/storage.js',
     '/js/titlebar.js',
     '/assets/icon.png',
-    '/manifest.json',
-    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    '/manifest.json'
 ];
 
+// O'rnatish - faqat static fayllarni keshla
 self.addEventListener('install', e => {
     e.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(ASSETS.filter(a => !a.startsWith('http')));
+            return cache.addAll(STATIC_ASSETS);
         })
     );
+    // Darhol yangi versiyani ishga tushir
     self.skipWaiting();
 });
 
+// Faollashtirish - eski keshlarni o'chir
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys().then(keys =>
             Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
+        ).then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
+// Fetch - HTML va API uchun NETWORK FIRST, static uchun cache
 self.addEventListener('fetch', e => {
-    // Network-first for API, cache-first for static
-    if (e.request.url.includes('/api/')) {
-        e.respondWith(fetch(e.request).catch(() => new Response('{"error":"offline"}', {
-            headers: { 'Content-Type': 'application/json' }
-        })));
+    const url = new URL(e.request.url);
+
+    // API so'rovlari - faqat network
+    if (url.pathname.startsWith('/api/') || url.pathname.includes('/.netlify/')) {
+        e.respondWith(
+            fetch(e.request).catch(() => new Response('{"error":"offline"}', {
+                headers: { 'Content-Type': 'application/json' }
+            }))
+        );
         return;
     }
+
+    // HTML sahifalar - NETWORK FIRST (har doim yangi versiya)
+    if (e.request.destination === 'document' || 
+        url.pathname.endsWith('.html') || 
+        url.pathname === '/') {
+        e.respondWith(
+            fetch(e.request, { cache: 'no-cache' })
+                .then(response => response)
+                .catch(() => caches.match(e.request))
+        );
+        return;
+    }
+
+    // JS va CSS fayllar - NETWORK FIRST (yangi deploy keyin yangilansin)
+    if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+        e.respondWith(
+            fetch(e.request, { cache: 'no-cache' })
+                .then(response => {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+                    return response;
+                })
+                .catch(() => caches.match(e.request))
+        );
+        return;
+    }
+
+    // Boshqa static fayllar - cache first
     e.respondWith(
         caches.match(e.request).then(cached => {
-            return cached || fetch(e.request).catch(() => caches.match('/index.html'));
+            return cached || fetch(e.request);
         })
     );
 });
