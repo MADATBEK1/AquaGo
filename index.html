@@ -93,7 +93,6 @@
             min-height: 100vh;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            text-align: center;
             padding: 120px 40px 80px;
             position: relative; z-index: 1;
         }
@@ -102,10 +101,8 @@
             font-weight: 900;
             line-height: 1.05;
             margin-bottom: 24px;
-            letter-spacing: -2px;
-        }
-        .grad-blue {
-            background: linear-gradient(135deg, #e0f2fe, #38bdf8, #0ea5e9);
+            text-align: center;
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9, #8b5cf6);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
         }
@@ -121,8 +118,7 @@
             padding: 16px 36px;
             background: linear-gradient(135deg, #0ea5e9, #0284c7);
             border: none; border-radius: 50px; color: white;
-            font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1rem;
-            cursor: pointer; transition: all 0.4s;
+            font-size: 1.1rem; font-weight: 700;
             text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
             box-shadow: 0 8px 40px rgba(14,165,233,0.35);
         }
@@ -130,17 +126,14 @@
             transform: translateY(-3px) scale(1.03);
             box-shadow: 0 16px 50px rgba(14,165,233,0.5);
         }
-        .btn-ghost {
-            padding: 16px 36px;
+        .btn-hero.secondary {
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 50px; color: white;
-            font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 1rem;
-            cursor: pointer; transition: all 0.3s;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+            backdrop-filter: blur(10px);
         }
-        .btn-ghost:hover {
-            background: rgba(255,255,255,0.1);
+        .btn-hero.secondary:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(14,165,233,0.3);
             transform: translateY(-2px);
         }
 
@@ -149,20 +142,71 @@
             display: flex; gap: 48px; justify-content: center; flex-wrap: wrap;
             padding: 32px 40px;
             background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
             backdrop-filter: blur(10px);
         }
-        .hstat { text-align: center; }
+        .hstat {
+            text-align: center;
+        }
+        .hstat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: block;
+        }
         .hstat-num {
-            font-size: 2rem; font-weight: 900;
+            font-size: 2rem;
+            font-weight: 900;
             background: linear-gradient(135deg, #38bdf8, #0ea5e9);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin-bottom: 6px;
+            line-height: 1;
         }
-        .hstat-lab { font-size: 0.78rem; color: var(--text2); margin-top: 4px; font-weight: 500; }
+        .hstat-label {
+            color: var(--text2);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
 
-        /* ── Enhanced Floating water drops with advanced effects */
+        /* Hero Status */
+        .hero-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 20px;
+            color: #22c55e;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 30px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulseRing 2s ease-in-out infinite;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* Floating water drops with advanced effects */
         .floating-drops {
             position: absolute; inset: 0; overflow: hidden; pointer-events: none;
         }
@@ -243,16 +287,421 @@
             50% { box-shadow: 0 0 40px rgba(14, 165, 233, 0.6); }
         }
 
-        /* Interactive hover effects */
-        .btn-hero:hover {
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7);
-            background-size: 200% 200%;
-            animation: gradientShift 3s ease infinite;
+        /* Download Section */
+        .download-section {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            padding: 120px 40px;
+            position: relative;
         }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+
+        .download-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin: 60px 0;
+        }
+
+        .download-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .download-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(14, 165, 233, 0.2);
+        }
+
+        .download-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .download-icon {
+            font-size: 3rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .download-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--light);
+        }
+
+        .platform-badge {
+            background: var(--gradient);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .download-features {
+            list-style: none;
+            margin: 0 0 30px 0;
+            padding: 0;
+        }
+
+        .download-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 1rem;
+            color: #cbd5e1;
+        }
+
+        .download-features li:last-child {
+            border-bottom: none;
+        }
+
+        .qr-code {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+            transition: all 0.3s ease;
+        }
+
+        .qr-code:hover {
+            border-color: var(--primary);
+            background: rgba(14, 165, 233, 0.05);
+        }
+
+        .qr-placeholder {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .qr-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .qr-text {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .qr-instruction {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .install-steps {
+            margin: 30px 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step-item:hover {
+            background: rgba(14, 165, 233, 0.05);
+            transform: translateX(4px);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .step-text {
+            font-size: 1rem;
+            color: #cbd5e1;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .download-btn:hover::before {
+            left: 100%;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .download-btn.primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+        }
+
+        .download-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+
+        .app-store-section {
+            text-align: center;
+            margin-top: 80px;
+            padding: 60px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .store-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .store-buttons {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .store-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: not-allowed;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .store-btn:not(:disabled):hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .store-icon {
+            font-size: 2rem;
+        }
+
+        .store-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .store-name {
+            font-size: 1.1rem;
+            color: var(--light);
+        }
+
+        .store-status {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .download-section { padding: 80px 20px; }
+            .download-container { grid-template-columns: 1fr; gap: 30px; }
+            .download-card { padding: 30px; }
+            .store-buttons { flex-direction: column; align-items: center; }
+            .store-btn { width: 100%; max-width: 300px; }
+        }
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(5, 10, 25, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(14, 165, 233, 0.2);
+            z-index: 1000;
+            display: none;
+        }
+        .mobile-nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0;
+        }
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text2);
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 12px;
+            min-width: 60px;
+        }
+        .mobile-nav-item:hover {
+            color: var(--primary);
+            background: rgba(14, 165, 233, 0.1);
+        }
+        .mobile-nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+        .mobile-nav-text {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .mobile-user:hover { color: #0ea5e9; }
+        .mobile-driver:hover { color: #22c55e; }
+        .mobile-info:hover { color: #8b5cf6; }
+        .mobile-contact:hover { color: #f59e0b; }
+        
+        @media (max-width: 768px) {
+            .mobile-nav { display: block; }
+            .navbar { display: none; }
+        }
+        .quick-access {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .qa-title {
+            font-size: 1.1rem;
+            color: var(--text2);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .qa-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .qa-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            min-width: 160px;
+        }
+        .qa-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(14, 165, 233, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(14, 165, 233, 0.2);
+        }
+        .qa-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .qa-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .qa-desc {
+            font-size: 0.8rem;
+            color: var(--text2);
+        }
+        .qa-user:hover {
+            background: rgba(14, 165, 233, 0.1);
+            border-color: rgba(14, 165, 233, 0.4);
+        }
+        .qa-driver:hover {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.4);
         }
 
         /* ── Section Layout ── */
@@ -511,6 +960,28 @@
 <body>
     <canvas id="bgCanvas"></canvas>
 
+    <!-- Mobile Navigation Bar -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-inner">
+            <a href="app.html?role=user&demo=true" class="mobile-nav-item mobile-user">
+                <span class="mobile-nav-icon">?</span>
+                <span class="mobile-nav-text">Mijoz</span>
+            </a>
+            <a href="app.html?role=driver&demo=true" class="mobile-nav-item mobile-driver">
+                <span class="mobile-nav-icon">?</span>
+                <span class="mobile-nav-text">Suvchi</span>
+            </a>
+            <a href="#features" class="mobile-nav-item mobile-info">
+                <span class="mobile-nav-icon">?</span>
+                <span class="mobile-nav-text">Qulayliklar</span>
+            </a>
+            <a href="#contact" class="mobile-nav-item mobile-contact">
+                <span class="mobile-nav-icon">?</span>
+                <span class="mobile-nav-text">Aloqa</span>
+            </a>
+        </div>
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
         <div class="nav-logo">
@@ -594,18 +1065,31 @@
             </div>
             
             <!-- Trust Indicators -->
-            <div class="trust-badges">
-                <div class="trust-badge">
-                    <span class="badge-icon"> </span>
-                    <span class="badge-text">Tez Yetkazish</span>
-                </div>
-                <div class="trust-badge">
-                    <span class="badge-icon"> </span>
-                    <span class="badge-text">Sifatli Suv</span>
-                </div>
-                <div class="trust-badge">
-                    <span class="badge-icon"> </span>
-                    <span class="badge-text">24/7 Xizmat</span>
+            <div class="hero-cta">
+                <a href="app.html?role=user" class="btn-hero primary">
+                    <span class="btn-icon">? Suv kerak</span>
+                    <span class="btn-text">Buyurtma bering</span>
+                </a>
+                <a href="app.html?role=driver" class="btn-hero secondary">
+                    <span class="btn-icon">? Suvchi bo'ling</span>
+                    <span class="btn-text">Ish boshlang</span>
+                </a>
+            </div>
+            
+            <!-- Quick Access Buttons -->
+            <div class="quick-access">
+                <div class="qa-title">Tezkor kirish:</div>
+                <div class="qa-buttons">
+                    <a href="app.html?role=user&demo=true" class="qa-btn qa-user">
+                        <span class="qa-icon">?</span>
+                        <span class="qa-label">Mijoz sifatida</span>
+                        <span class="qa-desc">Suv buyurish</span>
+                    </a>
+                    <a href="app.html?role=driver&demo=true" class="qa-btn qa-driver">
+                        <span class="qa-icon">?</span>
+                        <span class="qa-label">Suvchi sifatida</span>
+                        <span class="qa-desc">Buyurtmalarni qabul qilish</span>
+                    </a>
                 </div>
             </div>
             
@@ -812,7 +1296,121 @@
         </div>
     </section>
 
-    <!-- Testimonials -->
+    <!-- Download Section -->
+        <section id="download" class="download-section">
+            <div class="section-inner">
+                <div class="section-tag">YUKLAB OLISH</div>
+                <h2 class="section-title">AquaGo Ilovasini Yuklab Oling</h2>
+                <p class="section-subtitle">Telefon va kompyuteringizga o'rnating, suv buyurtmalari bir tugma uzoqda!</p>
+                
+                <div class="download-container">
+                    <!-- Mobile Download -->
+                    <div class="download-card mobile-card">
+                        <div class="download-header">
+                            <div class="download-icon">?</div>
+                            <h3>Mobil Ilova</h3>
+                            <span class="platform-badge">PWA</span>
+                        </div>
+                        <div class="download-content">
+                            <ul class="download-features">
+                                <li>? Offline ishlashi</li>
+                                <li>? Push bildirishlar</li>
+                                <li>? Tez yuklanish</li>
+                                <li>? Kam joy egallaydi</li>
+                            </ul>
+                            <div class="qr-code">
+                                <div class="qr-placeholder">
+                                    <span class="qr-icon">?</span>
+                                    <span class="qr-text">QR Kod</span>
+                                </div>
+                                <p class="qr-instruction">Telefon kamerasini olib skanlang</p>
+                            </div>
+                            <div class="download-buttons">
+                                <button class="download-btn primary" onclick="installPWA()">
+                                    <span class="btn-icon">?</span>
+                                    <span class="btn-text">Telefonga O'rnatish</span>
+                                </button>
+                                <button class="download-btn secondary" onclick="shareApp()">
+                                    <span class="btn-icon">?</span>
+                                    <span class="btn-text">Ulashish</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Download -->
+                    <div class="download-card desktop-card">
+                        <div class="download-header">
+                            <div class="download-icon">?</div>
+                            <h3>Kompyuter Ilovasi</h3>
+                            <span class="platform-badge">PWA</span>
+                        </div>
+                        <div class="download-content">
+                            <ul class="download-features">
+                                <li>? Full screen rejim</li>
+                                <li>? Klaviatura qisqa yo'llari</li>
+                                <li>? Ko'p oyna ishlashi</li>
+                                <li>? Avtomatik yangilanish</li>
+                            </ul>
+                            <div class="install-steps">
+                                <div class="step-item">
+                                    <div class="step-number">1</div>
+                                    <div class="step-text">Chrome'da oching</div>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">2</div>
+                                    <div class="step-text">"O'rnatish" tugmasini bosing</div>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">3</div>
+                                    <div class="step-text">Ishga stoldan ishlating</div>
+                                </div>
+                            </div>
+                            <div class="download-buttons">
+                                <button class="download-btn primary" onclick="installDesktopPWA()">
+                                    <span class="btn-icon">?</span>
+                                    <span class="btn-text">Kompyuterga O'rnatish</span>
+                                </button>
+                                <button class="download-btn secondary" onclick="openWebApp()">
+                                    <span class="btn-icon">?</span>
+                                    <span class="btn-text">Brauzerda Ochish</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- App Store Section -->
+                <div class="app-store-section">
+                    <h3 class="store-title">Yaqinda Do'konlarda</h3>
+                    <div class="store-buttons">
+                        <button class="store-btn google-play" disabled>
+                            <span class="store-icon">?</span>
+                            <div class="store-text">
+                                <span class="store-name">Google Play</span>
+                                <span class="store-status">Tez orada</span>
+                            </div>
+                        </button>
+                        <button class="store-btn app-store" disabled>
+                            <span class="store-icon">?</span>
+                            <div class="store-text">
+                                <span class="store-name">App Store</span>
+                                <span class="store-status">Tez orada</span>
+                            </div>
+                        </button>
+                        <button class="store-btn windows" disabled>
+                            <span class="store-icon">?</span>
+                            <div class="store-text">
+                                <span class="store-name">Microsoft Store</span>
+                                <span class="store-status">Tez orada</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
     <section style="background: rgba(255,255,255,0.01);">
         <div class="section-inner">
             <div class="section-tag tag-gold">⭐ Fikrlar</div>
@@ -1212,6 +1810,506 @@
                 requestAnimationFrame(() => this.animate());
             }
         }
+
+        // Enhanced PWA Installation Functions
+        let deferredPrompt;
+        let isInstallable = false;
+        let installAttempts = 0;
+
+        // Listen for beforeinstallprompt event with better detection
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA install prompt detected:', e);
+            e.preventDefault();
+            deferredPrompt = e;
+            isInstallable = true;
+            installAttempts++;
+            
+            console.log('PWA is installable, attempt:', installAttempts);
+            
+            // Show install banner after delay
+            setTimeout(() => {
+                if (isInstallable && !localStorage.getItem('pwa-install-dismissed')) {
+                    showInstallBanner();
+                }
+            }, 3000);
+        });
+
+        // Additional detection for desktop
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check if running on desktop Chrome
+            const isDesktop = !window.matchMedia('(max-width: 768px)').matches;
+            const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+            
+            if (isDesktop && isChrome) {
+                console.log('Desktop Chrome detected, checking PWA installability');
+                
+                // Try to trigger PWA prompt after page load
+                setTimeout(() => {
+                    if (!isInstallable) {
+                        console.log('No PWA prompt yet, trying manual trigger');
+                        checkPWAInstallability();
+                    }
+                }, 2000);
+            }
+        });
+
+        function checkPWAInstallability() {
+            // Check if service worker is ready
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(registration => {
+                    console.log('Service worker ready:', registration);
+                    
+                    // Check if PWA criteria are met
+                    const isPWAReady = registration.active && 
+                                       window.location.protocol === 'https:' || 
+                                       window.location.hostname === 'localhost';
+                    
+                    if (isPWAReady && !isInstallable) {
+                        console.log('PWA criteria met, trying to trigger install prompt');
+                        // Force trigger install prompt for desktop
+                        triggerDesktopInstall();
+                    }
+                });
+            }
+        }
+
+        function triggerDesktopInstall() {
+            // Create a custom install prompt for desktop
+            const installPrompt = document.createElement('div');
+            installPrompt.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: white; padding: 20px; border-radius: 12px; z-index: 10000; max-width: 350px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
+                    <h3 style="margin: 0 0 10px 0;">? AquaGo Desktop Ilovasi</h3>
+                    <p style="margin: 0 0 15px 0; font-size: 14px;">Kompyuteringizga AquaGo ilovasini o'rnating va to'liq ekran rejimda foydalaning!</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="attemptDesktopInstall()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">O'rnatish</button>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer;">Bekor</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(installPrompt);
+        }
+
+        function attemptDesktopInstall() {
+            console.log('Attempting desktop PWA installation');
+            
+            // Remove the prompt
+            const prompt = document.querySelector('[style*="position: fixed"]');
+            if (prompt) prompt.remove();
+            
+            // Try the standard PWA installation
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('Kompyuter ilovasi o\'rnatildi! ?\nEndi ish stolidan ochishingiz mumkin.', 'success', 5000);
+                        localStorage.setItem('pwa-desktop-installed', 'true');
+                        hideInstallButtons();
+                    } else {
+                        showManualDesktopInstructions();
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                // Show manual instructions
+                showManualDesktopInstructions();
+            }
+        }
+
+        // Check if app is already installed
+        function checkIfInstalled() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isInWebAppChrome = window.navigator.standalone === true;
+            const isInstalled = isStandalone || isInWebAppChrome;
+            
+            if (isInstalled) {
+                console.log('AquaGo PWA is already installed');
+                hideInstallButtons();
+                return true;
+            }
+            return false;
+        }
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the PWA install prompt');
+                        showToast('Ilova muvaffaqiyatli o\'rnatildi! ?\nEndi telefoningizdan to\'g\'ridan-to\'g\'ri ishlatingiz.', 'success', 5000);
+                        localStorage.setItem('pwa-installed', 'true');
+                        hideInstallButtons();
+                    } else {
+                        console.log('User dismissed the PWA install prompt');
+                        showToast('O\'rnatish bekor qilindi', 'info');
+                    }
+                    deferredPrompt = null;
+                    isInstallable = false;
+                });
+            } else {
+                // Fallback for manual installation
+                showInstallInstructions();
+            }
+        }
+
+        function installDesktopPWA() {
+            console.log('Desktop PWA installation triggered');
+            
+            // Check if PWA prompt is available
+            if (deferredPrompt) {
+                console.log('PWA prompt found, showing installation dialog');
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    console.log('User choice:', choiceResult.outcome);
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('Kompyuter ilovasi o\'rnatildi! ?\nEndi ish stolidan ochishingiz mumkin.', 'success', 5000);
+                        localStorage.setItem('pwa-desktop-installed', 'true');
+                        hideInstallButtons();
+                    } else {
+                        showToast('O\'rnatish bekor qilindi', 'info');
+                    }
+                    deferredPrompt = null;
+                    isInstallable = false;
+                });
+            } else {
+                console.log('No PWA prompt available, showing manual instructions');
+                // Try to trigger PWA prompt manually
+                if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+                    showToast('Ilova allaqachon o\'rnatilgan!', 'info');
+                    return;
+                }
+                
+                // Show detailed desktop installation instructions
+                showDesktopInstructions();
+            }
+        }
+
+        function showInstallBanner() {
+            const banner = document.createElement('div');
+            banner.id = 'pwa-install-banner';
+            banner.innerHTML = `
+                <div class="install-banner-content">
+                    <div class="install-banner-icon">?</div>
+                    <div class="install-banner-text">
+                        <strong>AquaGo ilovasini o'rnating!</strong>
+                        <span>Tezroq ishlashi va offline rejim uchun</span>
+                    </div>
+                    <div class="install-banner-buttons">
+                        <button onclick="installPWA(); closeInstallBanner();" class="install-btn-accept">O'rnatish</button>
+                        <button onclick="closeInstallBanner();" class="install-btn-dismiss">Keyinroq</button>
+                    </div>
+                </div>
+            `;
+            banner.style.cssText = `
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+                color: white;
+                padding: 16px;
+                z-index: 10000;
+                animation: slideUp 0.5s ease;
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+                @keyframes slideDown {
+                    from { transform: translateY(0); }
+                    to { transform: translateY(100%); }
+                }
+                .install-banner-content {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .install-banner-icon {
+                    font-size: 2rem;
+                }
+                .install-banner-text {
+                    flex: 1;
+                }
+                .install-banner-text strong {
+                    display: block;
+                    font-size: 1rem;
+                    margin-bottom: 2px;
+                }
+                .install-banner-text span {
+                    font-size: 0.9rem;
+                    opacity: 0.9;
+                }
+                .install-banner-buttons {
+                    display: flex;
+                    gap: 8px;
+                }
+                .install-btn-accept, .install-btn-dismiss {
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                .install-btn-accept {
+                    background: rgba(255, 255, 255, 0.2);
+                    color: white;
+                }
+                .install-btn-accept:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+                .install-btn-dismiss {
+                    background: transparent;
+                    color: white;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                }
+                .install-btn-dismiss:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+                @media (max-width: 768px) {
+                    .install-banner-content {
+                        flex-direction: column;
+                        text-align: center;
+                        gap: 12px;
+                    }
+                    .install-banner-buttons {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(banner);
+        }
+
+        function closeInstallBanner() {
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.style.animation = 'slideDown 0.5s ease';
+                setTimeout(() => {
+                    if (banner.parentNode) {
+                        banner.parentNode.removeChild(banner);
+                    }
+                }, 500);
+            }
+            localStorage.setItem('pwa-install-dismissed', 'true');
+        }
+
+        function hideInstallButtons() {
+            const installButtons = document.querySelectorAll('[onclick*="installPWA"], [onclick*="installDesktopPWA"]');
+            installButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+
+        function openWebApp() {
+            window.open('app.html', '_blank');
+        }
+
+        function shareApp() {
+            const shareData = {
+                title: 'AquaGo - Suv Yetkazib Berish',
+                text: 'O\'zbekistonda tez suv yetkazib berish xizmati! 15 daqiqada yetkazib berish.',
+                url: window.location.href
+            };
+
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                navigator.share(shareData).then(() => {
+                    showToast('Ilova ulandi! ?', 'success');
+                }).catch((error) => {
+                    console.log('Error sharing:', error);
+                    copyToClipboard();
+                });
+            } else {
+                copyToClipboard();
+            }
+        }
+
+        function copyToClipboard() {
+            const url = window.location.href;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Link nusxalandi! ?\nDo\'stlaringizga yuboring.', 'success', 3000);
+                }).catch(() => {
+                    fallbackCopyText(url);
+                });
+            } else {
+                fallbackCopyText(url);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('Link nusxalandi! ?', 'success');
+                } else {
+                    showToast('Linkni nusxalab bo\'lmadi', 'error');
+                }
+            } catch (err) {
+                showToast('Linkni nusxalab bo\'lmadi', 'error');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showInstallInstructions() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const instructions = isMobile ? `
+                <div style="text-align: left; max-width: 300px;">
+                    <h4 style="margin: 0 0 15px 0; color: #0ea5e9;">Telefonga o\'rnatish:</h4>
+                    <ol style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 14px;">
+                        <li>Chrome yoki Safari oching</li>
+                        <li>O'ng yuqoridagi menu (uch nuqta) ?</li>
+                        <li>"Ekranga qo'shish" yoki "O'rnatish"</li>
+                        <li>"O'rnatish" tugmasini bosing ?</li>
+                    </ol>
+                    <p style="margin: 15px 0 0 0; color: #94a3b8; font-size: 13px;">
+                        <strong>Nima uchun?</strong><br>
+                        ? Offline ishlashi<br>
+                        ? Tez ochilishi<br>
+                        ? Push bildirishlar
+                    </p>
+                </div>
+            ` : `
+                <div style="text-align: left; max-width: 350px;">
+                    <h4 style="margin: 0 0 15px 0; color: #0ea5e9;">Kompyuterga o\'rnatish:</h4>
+                    <ol style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 14px;">
+                        <li>Chrome brauzerini oching</li>
+                        <li>O'ng tomondagi o'rnatish ikonasi ?</li>
+                        <li>"O'rnatish AquaGo" tugmasini bosing</li>
+                        <li>Ilovani ish stolidan oching ?</li>
+                    </ol>
+                    <p style="margin: 15px 0 0 0; color: #94a3b8; font-size: 13px;">
+                        <strong>Nima uchun?</strong><br>
+                        ? Full screen rejim<br>
+                        ? Tez ishlashi<br>
+                        ? Mustaqil oyna
+                    </p>
+                </div>
+            `;
+            showToast(instructions, 'info', 8000);
+        }
+
+        function showManualDesktopInstructions() {
+            const instructions = `
+                <div style="text-align: left; max-width: 400px;">
+                    <h4 style="margin: 0 0 15px 0; color: #0ea5e9;">? Kompyuterga o'rnatish uchun:</h4>
+                    <div style="background: rgba(14, 165, 233, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="margin: 0; color: #cbd5e1; font-size: 13px;">
+                            <strong>Chrome brauzerida:</strong><br>
+                            1. Manzil satrida ? ikonasini toping<br>
+                            2. "O'rnatish AquaGo" tugmasini bosing<br>
+                            3. "O'rnatish" ni tasdiqlang
+                        </p>
+                    </div>
+                    <div style="background: rgba(14, 165, 233, 0.05); padding: 15px; border-radius: 8px;">
+                        <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                            <strong>Agar ? ikonasi ko'rinmasa:</strong><br>
+                            1. Chrome menu (uch nuqta) ?<br>
+                            2. "AquaGo o'rnatish" tanlang<br>
+                            3. "O'rnatish" tugmasini bosing
+                        </p>
+                    </div>
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
+                        <strong style="color: #22c55e;">? O'rnatilgandan keyin:</strong><br>
+                        <span style="color: #cbd5e1; font-size: 12px;">
+                            ? Ish stoldan AquaGo ikonasi paydo bo'ladi<br>
+                            ? To'liq ekran rejimda ishlaydi<br>
+                            ? Offline ishlashi mumkin<br>
+                            ? Tez ochiladi
+                        </span>
+                    </div>
+                </div>
+            `;
+            showToast(instructions, 'info', 10000);
+        }
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const existingToast = document.querySelector('.custom-toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `custom-toast toast-${type}`;
+            toast.innerHTML = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#0ea5e9'};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 400px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+                animation: slideInRight 0.3s ease;
+                line-height: 1.5;
+            `;
+
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        }
+
+        // Initialize PWA detection
+        window.addEventListener('load', () => {
+            checkIfInstalled();
+            
+            // Check if service worker is supported
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('Service Worker registered:', registration);
+                }).catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+            }
+            
+            // Listen for app installed event
+            window.addEventListener('appinstalled', (evt) => {
+                console.log('AquaGo PWA was installed');
+                localStorage.setItem('pwa-installed', 'true');
+                hideInstallButtons();
+                showToast('AquaGo ilovasi muvaffaqiyatli o\'rnatildi! ?\nEndi telefoningizdan to\'g\'ridan-to\'g\'ri ishlatingiz.', 'success', 5000);
+            });
+        }); 
 
         // Initialize advanced water animation system
         const waterAnimation = new AquaAnimationSystem();

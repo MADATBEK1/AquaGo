@@ -240,6 +240,31 @@
     <script src="js/auth.js"></script>
     <script src="js/titlebar.js"></script>
     <script>
+        // URL parameter handling for direct access
+        function handleUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const role = params.get('role');
+            const demo = params.get('demo');
+            
+            // Auto-select role if specified
+            if (role === 'user' || role === 'driver') {
+                selectRole(role);
+            }
+            
+            // Auto-fill demo if requested
+            if (demo === 'true') {
+                setTimeout(() => {
+                    // Use the existing fillDemo function from auth.js
+                    if (typeof fillDemo === 'function') {
+                        fillDemo(role || 'user');
+                    }
+                }, 500);
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', handleUrlParams);
+        
         // PWA Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(() => { });
