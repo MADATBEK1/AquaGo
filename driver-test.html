@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 Suvchi Test - AquaGo</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 1.8rem; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; font-size: 0.9rem; }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+        .status-dot {
+            width: 10px; height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+        }
+        .status.offline { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+        .status.offline .status-dot { background: #ef4444; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 0.9rem; }
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-blue {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            margin-top: 10px;
+        }
+        .btn-blue:hover { box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4); }
+        
+        .orders-section {
+            margin-top: 30px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .orders-count {
+            background: rgba(14, 165, 233, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #38bdf8;
+        }
+        
+        .order-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            animation: slideIn 0.4s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .order-card:hover {
+            border-color: rgba(14, 165, 233, 0.3);
+            transform: translateY(-2px);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .order-id {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-family: monospace;
+        }
+        .order-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+        .status-accepted { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .detail-icon {
+            font-size: 1.1rem;
+        }
+        .detail-value {
+            font-weight: 500;
+        }
+        
+        .btn-accept {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-accept:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4); }
+        
+        .logs {
+            margin-top: 25px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .logs-title { font-size: 0.85rem; color: #64748b; margin-bottom: 10px; }
+        .log {
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+        .log.info { background: rgba(14, 165, 233, 0.1); color: #38bdf8; }
+        .log.success { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+        .log.error { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .log.warning { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+        .log-time { color: #64748b; font-size: 0.75rem; }
+        
+        .accepted-order {
+            display: none;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(14, 165, 233, 0.1));
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .accepted-order.show { display: block; animation: slideIn 0.5s ease; }
+        .accepted-title { font-size: 1.2rem; color: #22c55e; margin-bottom: 15px; }
+        .accepted-details {
+            text-align: left;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: #94a3b8; }
+        .detail-value { font-weight: 500; }
+        
+        .waiting-text {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+            font-size: 1rem;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 Suvchi Ilovasi</h1>
+        <p class="subtitle">AquaGo - Yangi buyurtmalarni qabul qiling</p>
+        
+        <div class="status" id="status">
+            <div class="status-dot"></div>
+            <span id="statusText">Serverga ulanmoqda...</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Suvchi ID</label>
+            <input type="text" id="driverId" value="driver-" placeholder="driver-123">
+        </div>
+        
+        <div class="form-group">
+            <label>Ism</label>
+            <input type="text" id="driverName" value="Alisher" placeholder="Ismingiz">
+        </div>
+        
+        <button class="btn" id="loginBtn" onclick="driverLogin()">
+            🔓 Online bo'lish
+        </button>
+        
+        <button class="btn btn-blue" onclick="updateLocation()">
+            📍 Joylashuvni yangilash
+        </button>
+        
+        <div class="orders-section">
+            <div class="section-title">
+                📦 Yangi Buyurtmalar
+                <span class="orders-count" id="ordersCount">0 ta</span>
+            </div>
+            
+            <div id="ordersList">
+                <div class="waiting-text">
+                    <div class="spinner"></div>
+                    Buyurtmalar kutilmoqda...
+                </div>
+            </div>
+        </div>
+        
+        <div class="accepted-order" id="acceptedOrder">
+            <div class="accepted-title">✅ Buyurtma Qabul Qilindi!</div>
+            <div class="accepted-details" id="acceptedDetails"></div>
+        </div>
+        
+        <div class="logs">
+            <div class="logs-title">📋 Tizim xabarlari:</div>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        // 🌐 Socket.IO ulanish
+        const socket = io('http://localhost:7474');
+        
+        const statusEl = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const loginBtn = document.getElementById('loginBtn');
+        const logsEl = document.getElementById('logs');
+        const ordersList = document.getElementById('ordersList');
+        const ordersCount = document.getElementById('ordersCount');
+        
+        let pendingOrders = [];
+        let isOnline = false;
+        let currentLocation = { lat: 41.2995, lng: 69.2401 }; // Default Toshkent
+        
+        // ── Logging ────────────────────────────────────────────
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('uz-UZ');
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            logsEl.prepend(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // ── Socket Events ─────────────────────────────────────
+        
+        // Ulanish o'rnatildi
+        socket.on('connect', () => {
+            log('✅ Serverga ulanish o\'rnatildi', 'success');
+            statusEl.classList.remove('offline');
+            statusText.textContent = 'Online - Login kutilmoqda';
+        });
+        
+        // Auth tasdiqlandi
+        socket.on('auth_success', ({ userId, role }) => {
+            log(`🔐 Login muvaffaqiyatli: ${userId} (${role})`, 'success');
+            statusText.textContent = '✅ Suvchi sifatida faol';
+            loginBtn.textContent = '🟢 Faol (Online)';
+            loginBtn.disabled = true;
+            isOnline = true;
+        });
+        
+        // Ulanish uzildi
+        socket.on('disconnect', () => {
+            log('❌ Server bilan aloqa uzildi', 'error');
+            statusEl.classList.add('offline');
+            statusText.textContent = 'Offline';
+            isOnline = false;
+        });
+        
+        // Yangi buyurtma keldi!
+        socket.on('new_order', (order) => {
+            log(`📦 YANGI BUYURTMA: #${order.orderId.substring(0, 15)}...`, 'success');
+            log(`👤 Mijoz: ${order.customerName}`, 'info');
+            log(`💧 Suv: ${order.waterAmount} dona`, 'info');
+            if (order.distance) {
+                log(`📍 Masofa: ${order.distance} km`, 'info');
+            }
+            
+            // Buyurtma ro'yxatga qo'shish
+            pendingOrders.push(order);
+            renderOrders();
+        });
+        
+        // Buyurtma qabul qilindi (tasdiqlash)
+        socket.on('order_accepted_success', ({ orderId, customerName, location, waterAmount, phone }) => {
+            log(`✅ Siz buyurtma oldingiz: #${orderId.substring(0, 15)}...`, 'success');
+            
+            // Accepted order ko'rsatish
+            const detailsHtml = `
+                <div class="detail-row">
+                    <span class="detail-label">👤 Mijoz:</span>
+                    <span class="detail-value">${customerName}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">💧 Suv miqdori:</span>
+                    <span class="detail-value">${waterAmount} dona</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">📞 Telefon:</span>
+                    <span class="detail-value">${phone}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">📍 Manzil:</span>
+                    <span class="detail-value">${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}</span>
+                </div>
+            `;
+            document.getElementById('acceptedDetails').innerHTML = detailsHtml;
+            document.getElementById('acceptedOrder').classList.add('show');
+            
+            // Ro'yxatdan o'chirish
+            pendingOrders = pendingOrders.filter(o => o.orderId !== orderId);
+            renderOrders();
+        });
+        
+        // Boshqa driver buyurtma oldi
+        socket.on('order_taken', ({ orderId, driverName }) => {
+            log(`⚠️ Buyurtma ${driverName} tomonidan olindi`, 'warning');
+            pendingOrders = pendingOrders.filter(o => o.orderId !== orderId);
+            renderOrders();
+        });
+        
+        // Yangi driver online
+        socket.on('driver_online', ({ userId, name }) => {
+            log(`🚗 Yangi suvchi online: ${name}`, 'info');
+        });
+        
+        // Xatolik
+        socket.on('error', ({ message }) => {
+            log(`❌ Xatolik: ${message}`, 'error');
+        });
+        
+        // ── Driver Login ──────────────────────────────────────
+        function driverLogin() {
+            const driverId = document.getElementById('driverId').value;
+            const name = document.getElementById('driverName').value;
+            
+            if (!driverId || !name) {
+                log('⚠️ Iltimos, barcha maydonlarni to\'ldiring', 'warning');
+                return;
+            }
+            
+            socket.emit('auth', { userId: driverId, role: 'driver', name });
+            
+            // Joylashuvni yuborish
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        socket.emit('update_location', currentLocation);
+                        log(`📍 Joylashuv yuborildi: ${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`, 'success');
+                    },
+                    (err) => {
+                        socket.emit('update_location', currentLocation);
+                        log(`📍 Default joylashuv yuborildi`, 'info');
+                    }
+                );
+            } else {
+                socket.emit('update_location', currentLocation);
+            }
+        }
+        
+        // ── Update Location ───────────────────────────────────
+        function updateLocation() {
+            if (!isOnline) {
+                log('⚠️ Avval login qiling', 'warning');
+                return;
+            }
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        socket.emit('update_location', currentLocation);
+                        log(`📍 Joylashuv yangilandi: ${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`, 'success');
+                    },
+                    (err) => {
+                        log('❌ Joylashuv aniqlanmadi', 'error');
+                    }
+                );
+            }
+        }
+        
+        // ── Accept Order ──────────────────────────────────────
+        function acceptOrder(orderId) {
+            socket.emit('accept_order', { orderId });
+            log(`📤 Buyurtma olish so'rovi yuborildi: #${orderId.substring(0, 15)}...`, 'info');
+        }
+        
+        // ── Render Orders ───────────────────────────────────
+        function renderOrders() {
+            ordersCount.textContent = `${pendingOrders.length} ta`;
+            
+            if (pendingOrders.length === 0) {
+                ordersList.innerHTML = `
+                    <div class="waiting-text">
+                        <div class="spinner"></div>
+                        Buyurtmalar kutilmoqda...
+                    </div>
+                `;
+                return;
+            }
+            
+            ordersList.innerHTML = pendingOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.orderId}</span>
+                        <span class="order-status status-pending">Yangi</span>
+                    </div>
+                    <div class="order-details">
+                        <div class="detail-item">
+                            <span class="detail-icon">👤</span>
+                            <span class="detail-value">${order.customerName}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">💧</span>
+                            <span class="detail-value">${order.waterAmount} dona</span>
+                        </div>
+                        ${order.distance ? `
+                        <div class="detail-item">
+                            <span class="detail-icon">📍</span>
+                            <span class="detail-value">${order.distance} km</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <span class="detail-icon">⏰</span>
+                            <span class="detail-value">${new Date(order.timestamp).toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </div>
+                    <button class="btn-accept" onclick="acceptOrder('${order.orderId}')">
+                        ✅ Buyurtma Olish
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // Auto-login with demo if available
+        if (document.getElementById('driverId').value === 'driver-') {
+            document.getElementById('driverId').value = 'driver-demo';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suvchi - AquaGo Real-Time</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1 { color: #22c55e; text-align: center; }
+        .status {
+            background: rgba(34, 197, 94, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .status.offline { background: rgba(239, 68, 68, 0.2); }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: white;
+            font-size: 16px;
+        }
+        button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-blue {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        }
+        .orders-title {
+            font-size: 18px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+        }
+        .order-count {
+            background: rgba(14, 165, 233, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #38bdf8;
+        }
+        .order-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .order-id { color: #64748b; }
+        .order-status {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .order-detail {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .order-detail strong { color: #94a3b8; }
+        .btn-accept {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            margin-top: 10px;
+        }
+        .waiting {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+        }
+        .accepted-order {
+            display: none;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(14, 165, 233, 0.2));
+            border: 2px solid #22c55e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .accepted-order.show { display: block; }
+        .log {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .log-entry { margin: 5px 0; padding: 5px; border-radius: 4px; }
+        .log-info { background: rgba(14, 165, 233, 0.1); color: #38bdf8; }
+        .log-success { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        .log-error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🚗 Suvchi Ilovasi</h1>
+    
+    <div class="status" id="status">
+        <span id="statusText">🔌 Ulanmoqda...</span>
+    </div>
+    
+    <h3>Suvchi ma'lumotlari:</h3>
+    <input type="text" id="driverId" value="driver-001" placeholder="Driver ID">
+    <input type="text" id="driverName" value="Alisher" placeholder="Ismingiz">
+    <button onclick="login()" id="loginBtn">🔐 Online Bo'lish</button>
+    <button onclick="updateLocation()" class="btn-blue">📍 Joylashuvni Yangilash</button>
+    
+    <div class="orders-title">
+        📦 Yangi Buyurtmalar
+        <span class="order-count" id="orderCount">0</span>
+    </div>
+    
+    <div id="ordersList">
+        <div class="waiting">Buyurtmalar kutilmoqda...</div>
+    </div>
+    
+    <div class="accepted-order" id="acceptedOrder">
+        <h3>✅ Buyurtma Qabul Qilindi!</h3>
+        <p><strong>Mijoz:</strong> <span id="accCustomer"></span></p>
+        <p><strong>Manzil:</strong> <span id="accAddress"></span></p>
+        <p><strong>Suv:</strong> <span id="accWater"></span> dona</p>
+    </div>
+    
+    <div class="log" id="logs">
+        <strong>📋 Tizim xabarlari:</strong>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:7575');
+        let isLoggedIn = false;
+        let pendingOrders = [];
+        let currentLocation = { lat: 41.2995, lng: 69.2401 };
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log-entry log-' + type;
+            div.textContent = '[' + new Date().toLocaleTimeString() + '] ' + message;
+            document.getElementById('logs').appendChild(div);
+            console.log('[' + type + '] ' + message);
+        }
+        
+        // Socket events
+        socket.on('connect', () => {
+            log('Serverga ulanish o\'rnatildi', 'success');
+            updateStatus('Connected. Please login.', 'online');
+        });
+        
+        socket.on('disconnect', () => {
+            log('Server bilan aloqa uzildi', 'error');
+            updateStatus('Disconnected', 'offline');
+            isLoggedIn = false;
+        });
+        
+        socket.on('auth_success', (data) => {
+            log('Login muvaffaqiyatli: ' + data.message, 'success');
+            updateStatus('✅ ' + data.message, 'online');
+            isLoggedIn = true;
+            document.getElementById('loginBtn').textContent = '🟢 Faol';
+            document.getElementById('loginBtn').disabled = true;
+        });
+        
+        socket.on('auth_error', (msg) => {
+            log('Login xatosi: ' + msg, 'error');
+        });
+        
+        // YANGI BUYURTMA - Bu asosiy event!
+        socket.on('new_order', (order) => {
+            log('📦 YANGI BUYURTMA KELDI!', 'success');
+            log('Mijoz: ' + order.customerName, 'info');
+            log('Suv: ' + order.waterAmount + ' dona', 'info');
+            if (order.distance) {
+                log('Masofa: ' + order.distance + ' km', 'info');
+            }
+            
+            pendingOrders.push(order);
+            renderOrders();
+        });
+        
+        socket.on('order_taken', (data) => {
+            log('⚠️ Buyurtma ' + data.driverName + ' tomonidan olindi', 'info');
+            pendingOrders = pendingOrders.filter(o => o.orderId !== data.orderId);
+            renderOrders();
+        });
+        
+        socket.on('order_accepted_success', (data) => {
+            log('✅ Siz buyurtma oldingiz: ' + data.orderId, 'success');
+            
+            document.getElementById('accCustomer').textContent = data.customerName;
+            document.getElementById('accAddress').textContent = data.address || 'Manzil yoq';
+            document.getElementById('accWater').textContent = data.waterAmount;
+            document.getElementById('acceptedOrder').classList.add('show');
+        });
+        
+        socket.on('accept_error', (msg) => {
+            log('Xatolik: ' + msg, 'error');
+        });
+        
+        socket.on('driver_online', (data) => {
+            log('🚗 Yangi suvchi online: ' + data.name, 'info');
+        });
+        
+        // Functions
+        function updateStatus(text, type) {
+            const statusEl = document.getElementById('status');
+            document.getElementById('statusText').textContent = text;
+            if (type === 'offline') {
+                statusEl.classList.add('offline');
+            } else {
+                statusEl.classList.remove('offline');
+            }
+        }
+        
+        function login() {
+            const driverId = document.getElementById('driverId').value;
+            const name = document.getElementById('driverName').value;
+            
+            if (!driverId || !name) {
+                log('Iltimos, barcha maydonlarni to\'ldiring', 'error');
+                return;
+            }
+            
+            socket.emit('auth', {
+                userId: driverId,
+                role: 'driver',
+                name: name
+            });
+            
+            // Send initial location
+            updateLocation();
+        }
+        
+        function updateLocation() {
+            if (!isLoggedIn) {
+                log('Avval login qiling!', 'error');
+                return;
+            }
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        currentLocation = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude
+                        };
+                        socket.emit('update_location', currentLocation);
+                        log('Joylashuv yangilandi: ' + currentLocation.lat.toFixed(4) + ', ' + currentLocation.lng.toFixed(4), 'info');
+                    },
+                    (err) => {
+                        log('Joylashuv aniqlanmadi, default ishlatilmoqda', 'error');
+                        socket.emit('update_location', currentLocation);
+                    }
+                );
+            } else {
+                socket.emit('update_location', currentLocation);
+            }
+        }
+        
+        function acceptOrder(orderId) {
+            log('Buyurtma olishga urinish: ' + orderId, 'info');
+            socket.emit('accept_order', { orderId: orderId });
+        }
+        
+        function renderOrders() {
+            document.getElementById('orderCount').textContent = pendingOrders.length;
+            
+            if (pendingOrders.length === 0) {
+                document.getElementById('ordersList').innerHTML = '<div class="waiting">Buyurtmalar kutilmoqda...</div>';
+                return;
+            }
+            
+            document.getElementById('ordersList').innerHTML = pendingOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.orderId}</span>
+                        <span class="order-status">Yangi</span>
+                    </div>
+                    <div class="order-detail">
+                        <strong>👤 Mijoz:</strong> ${order.customerName}
+                    </div>
+                    <div class="order-detail">
+                        <strong>💧 Suv:</strong> ${order.waterAmount} dona
+                    </div>
+                    ${order.distance ? `
+                    <div class="order-detail">
+                        <strong>📍 Masofa:</strong> ${order.distance} km
+                    </div>
+                    ` : ''}
+                    <div class="order-detail">
+                        <strong>📌 Manzil:</strong> ${order.address || 'Koordinatalar'}
+                    </div>
+                    <button class="btn-accept" onclick="acceptOrder('${order.orderId}')">
+                        ✅ Buyurtma Olish
+                    </button>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

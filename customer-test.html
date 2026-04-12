@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚰 Mijoz Test - AquaGo</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 1.8rem; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; font-size: 0.9rem; }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+        .status-dot {
+            width: 10px; height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+        }
+        .status.offline { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+        .status.offline .status-dot { background: #ef4444; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 0.9rem; }
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .logs {
+            margin-top: 25px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .logs-title { font-size: 0.85rem; color: #64748b; margin-bottom: 10px; }
+        .log {
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+        .log.info { background: rgba(14, 165, 233, 0.1); color: #38bdf8; }
+        .log.success { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+        .log.error { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .log.warning { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+        .log-time { color: #64748b; font-size: 0.75rem; }
+        
+        .driver-info {
+            display: none;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(14, 165, 233, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .driver-info.show { display: block; animation: slideIn 0.5s ease; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .driver-avatar {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, #22c55e, #0ea5e9);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+        }
+        .driver-name { font-size: 1.2rem; font-weight: 600; margin-bottom: 5px; }
+        .driver-phone { font-size: 1rem; color: #0ea5e9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚰 Mijoz Ilovasi</h1>
+        <p class="subtitle">AquaGo - Suv yetkazib berish test</p>
+        
+        <div class="status" id="status">
+            <div class="status-dot"></div>
+            <span id="statusText">Serverga ulanmoqda...</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Mijoz ID</label>
+            <input type="text" id="userId" value="user-" placeholder="user-123">
+        </div>
+        
+        <div class="form-group">
+            <label>Ism</label>
+            <input type="text" id="userName" value="Azizbek" placeholder="Ismingiz">
+        </div>
+        
+        <div class="form-group">
+            <label>Suv miqdori (dona)</label>
+            <select id="waterAmount">
+                <option value="1">1 dona (19 litr)</option>
+                <option value="2">2 dona (38 litr)</option>
+                <option value="3">3 dona (57 litr)</option>
+                <option value="5">5 dona (95 litr)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Manzil (koordinatalar)</label>
+            <input type="text" id="location" value='{"lat": 41.2995, "lng": 69.2401}' placeholder='{"lat": 41.2995, "lng": 69.2401}'>
+        </div>
+        
+        <button class="btn" id="orderBtn" onclick="createOrder()">
+            📦 Buyurtma Berish
+        </button>
+        
+        <div class="driver-info" id="driverInfo">
+            <div class="driver-avatar">🚗</div>
+            <div class="driver-name" id="driverName">Suvchi ismi</div>
+            <div class="driver-phone" id="driverPhone">+998 XX XXX XX XX</div>
+            <p style="margin-top: 15px; color: #22c55e; font-size: 0.9rem;">✅ Buyurtmangiz qabul qilindi!</p>
+        </div>
+        
+        <div class="logs">
+            <div class="logs-title">📋 Tizim xabarlari:</div>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        // 🌐 Socket.IO ulanish
+        const socket = io('http://localhost:7474');
+        
+        const statusEl = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const orderBtn = document.getElementById('orderBtn');
+        const logsEl = document.getElementById('logs');
+        
+        // ── Logging ────────────────────────────────────────────
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString('uz-UZ');
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            logsEl.prepend(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // ── Socket Events ─────────────────────────────────────
+        
+        // Ulanish o'rnatildi
+        socket.on('connect', () => {
+            log('✅ Serverga ulanish o\'rnatildi', 'success');
+            statusEl.classList.remove('offline');
+            statusText.textContent = 'Online - Kutilmoqda';
+            
+            // Auth
+            const userId = document.getElementById('userId').value;
+            const name = document.getElementById('userName').value;
+            socket.emit('auth', { userId, role: 'user', name });
+        });
+        
+        // Auth tasdiqlandi
+        socket.on('auth_success', ({ userId, role }) => {
+            log(`🔐 Login muvaffaqiyatli: ${userId} (${role})`, 'success');
+            statusText.textContent = '✅ Mijoz sifatida ulandi';
+        });
+        
+        // Ulanish uzildi
+        socket.on('disconnect', () => {
+            log('❌ Server bilan aloqa uzildi', 'error');
+            statusEl.classList.add('offline');
+            statusText.textContent = 'Offline';
+        });
+        
+        // Buyurtma yaratildi (tasdiqlash)
+        socket.on('order_created', ({ orderId, status, message }) => {
+            log(`📦 Buyurtma yaratildi: ${orderId}`, 'success');
+            log(`📋 Status: ${status} - ${message}`, 'info');
+            orderBtn.textContent = '⏳ Suvchi kutilmoqda...';
+            orderBtn.disabled = true;
+        });
+        
+        // Suvchi topilmadi
+        socket.on('no_drivers', ({ message }) => {
+            log(`⚠️ ${message}`, 'warning');
+            orderBtn.textContent = '📦 Buyurtma Berish';
+            orderBtn.disabled = false;
+        });
+        
+        // Buyurtma qabul qilindi (suvchi topildi!)
+        socket.on('order_accepted', ({ orderId, driverName, driverPhone, message }) => {
+            log(`🎉 Buyurtma qabul qilindi!`, 'success');
+            log(`👤 Suvchi: ${driverName}`, 'info');
+            log(`📞 Telefon: ${driverPhone}`, 'info');
+            
+            // Driver info ko'rsatish
+            document.getElementById('driverName').textContent = driverName;
+            document.getElementById('driverPhone').textContent = driverPhone;
+            document.getElementById('driverInfo').classList.add('show');
+            
+            orderBtn.textContent = '✅ Buyurtma Bajarilmoqda';
+        });
+        
+        // Xatolik
+        socket.on('error', ({ message }) => {
+            log(`❌ Xatolik: ${message}`, 'error');
+            orderBtn.textContent = '📦 Buyurtma Berish';
+            orderBtn.disabled = false;
+        });
+        
+        // ── Buyurtma berish ───────────────────────────────────
+        function createOrder() {
+            const userId = document.getElementById('userId').value;
+            const name = document.getElementById('userName').value;
+            const waterAmount = parseInt(document.getElementById('waterAmount').value);
+            const locationStr = document.getElementById('location').value;
+            
+            if (!userId || !name) {
+                log('⚠️ Iltimos, barcha maydonlarni to\'ldiring', 'warning');
+                return;
+            }
+            
+            let location;
+            try {
+                location = JSON.parse(locationStr);
+            } catch {
+                log('❌ Manzil formati noto\'g\'ri', 'error');
+                return;
+            }
+            
+            // Yangilangan user ma'lumotlari bilan auth
+            socket.emit('auth', { userId, role: 'user', name });
+            
+            // Buyurtma yuborish
+            const orderData = { location, waterAmount, userId };
+            socket.emit('create_order', orderData);
+            
+            log('📤 Buyurtma yuborilmoqda...', 'info');
+            log(`📍 Manzil: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`, 'info');
+            log(`💧 Suv: ${waterAmount} dona`, 'info');
+        }
+        
+        // ── Geolocation ────────────────────────────────────────
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    document.getElementById('location').value = JSON.stringify(loc);
+                    log(`📍 Joylashuv aniqlandi: ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`, 'success');
+                },
+                (err) => {
+                    log('⚠️ Joylashuv aniqlanmadi (default Toshkent)', 'warning');
+                }
+            );
+        }
+    </script>
+</body>
+</html>

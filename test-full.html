@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaGo - Full Test Suite</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        .panel-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+        .panel-customer .panel-title { color: #0ea5e9; border-color: #0ea5e9; }
+        .panel-driver .panel-title { color: #22c55e; border-color: #22c55e; }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .status-online { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status-offline { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .btn-customer {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        }
+        .btn-customer:hover {
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+        }
+        
+        .btn-driver {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        .btn-driver:hover {
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+        
+        .orders-list {
+            margin-top: 15px;
+        }
+        
+        .order-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .order-id { color: #64748b; font-family: monospace; }
+        .order-status {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-new { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .status-accepted { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        
+        .order-detail {
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        .order-detail strong { color: #94a3b8; }
+        
+        .console {
+            grid-column: 1 / -1;
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 15px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .console-line {
+            margin: 2px 0;
+            padding: 3px 0;
+            border-left: 3px solid transparent;
+            padding-left: 10px;
+        }
+        .log-info { color: #38bdf8; border-color: #38bdf8; }
+        .log-success { color: #22c55e; border-color: #22c55e; }
+        .log-error { color: #ef4444; border-color: #ef4444; }
+        .log-warn { color: #fbbf24; border-color: #fbbf24; }
+        
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(14, 165, 233, 0.2));
+            border: 2px solid #22c55e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .success-message.show { display: block; animation: fadeIn 0.5s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .step {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .step.active { background: rgba(14, 165, 233, 0.3); color: #38bdf8; }
+        .step.completed { background: rgba(34, 197, 94, 0.3); color: #22c55e; }
+    </style>
+</head>
+<body>
+    <h1>🌊 AquaGo Real-Time Test</h1>
+    <p class="subtitle">To'liq ishlaydigan buyurtma tizimi</p>
+    
+    <div class="step-indicator">
+        <div class="step active" id="step1">1. Driver Online</div>
+        <div class="step" id="step2">2. Customer Login</div>
+        <div class="step" id="step3">3. Create Order</div>
+        <div class="step" id="step4">4. Driver Accepts</div>
+    </div>
+    
+    <div class="container">
+        <!-- CUSTOMER PANEL -->
+        <div class="panel panel-customer">
+            <div class="panel-title">👤 Mijoz (Customer)</div>
+            
+            <div class="status status-offline" id="customerStatus">
+                🔴 Offline - Ulanish kutilmoqda
+            </div>
+            
+            <input type="text" id="custId" value="customer-001" placeholder="Customer ID">
+            <input type="text" id="custName" value="Azizbek" placeholder="Ismingiz">
+            <button class="btn-customer" onclick="customerLogin()" id="custLoginBtn">
+                🔐 Login
+            </button>
+            
+            <hr style="border-color: #334155; margin: 20px 0;">
+            
+            <input type="text" id="custAddress" value="Toshkent, Chilonzor 12" placeholder="Manzil">
+            <select id="custWater">
+                <option value="1">1 dona (19L)</option>
+                <option value="2" selected>2 dona (38L)</option>
+                <option value="3">3 dona (57L)</option>
+                <option value="5">5 dona (95L)</option>
+            </select>
+            <button class="btn-customer" onclick="createOrder()" id="createOrderBtn" disabled>
+                📦 Buyurtma Berish
+            </button>
+            
+            <div class="success-message" id="customerSuccess">
+                <h3>✅ Suvchi Topildi!</h3>
+                <p><strong id="foundDriverName">Suvchi ismi</strong></p>
+                <p>15 daqiqada yetib keladi</p>
+            </div>
+        </div>
+        
+        <!-- DRIVER PANEL -->
+        <div class="panel panel-driver">
+            <div class="panel-title">🚗 Suvchi (Driver)</div>
+            
+            <div class="status status-offline" id="driverStatus">
+                🔴 Offline - Ulanish kutilmoqda
+            </div>
+            
+            <input type="text" id="drvId" value="driver-001" placeholder="Driver ID">
+            <input type="text" id="drvName" value="Alisher" placeholder="Ismingiz">
+            <button class="btn-driver" onclick="driverLogin()" id="drvLoginBtn">
+                🟢 Online Bo'lish
+            </button>
+            <button class="btn-driver" onclick="updateDriverLocation()" style="background: #3b82f6;">
+                📍 Joylashuvni Yangilash
+            </button>
+            
+            <hr style="border-color: #334155; margin: 20px 0;">
+            
+            <div class="orders-list">
+                <div style="color: #64748b; text-align: center; padding: 20px;" id="noOrders">
+                    Buyurtmalar kutilmoqda...
+                </div>
+                <div id="driverOrders"></div>
+            </div>
+            
+            <div class="success-message" id="driverSuccess">
+                <h3>✅ Buyurtma Olingan!</h3>
+                <p>Mijoz: <span id="acceptedCustomer"></span></p>
+                <p>Yetiib borish uchun yo'lga chiqing</p>
+            </div>
+        </div>
+        
+        <!-- CONSOLE -->
+        <div class="console" id="console">
+            <div style="color: #64748b; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px;">
+                📋 Console Output (Real-time logs)
+            </div>
+            <div id="consoleOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        // Socket connection
+        const socket = io('http://localhost:7676');
+        let customerLoggedIn = false;
+        let driverLoggedIn = false;
+        let currentLocation = { lat: 41.2995, lng: 69.2401 };
+        
+        // Console logging
+        function consoleLog(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = 'console-line log-' + type;
+            const time = new Date().toLocaleTimeString();
+            line.textContent = `[${time}] ${message}`;
+            document.getElementById('consoleOutput').prepend(line);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Update step indicator
+        function updateStep(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById('step' + i);
+                if (i < stepNum) {
+                    step.className = 'step completed';
+                    step.textContent = step.textContent.replace(/^\d+\./, '✓');
+                } else if (i === stepNum) {
+                    step.className = 'step active';
+                }
+            }
+        }
+        
+        // Socket events
+        socket.on('connect', () => {
+            consoleLog('🌐 Serverga ulanish o\'rnatildi', 'success');
+            document.getElementById('customerStatus').textContent = '🟡 Connected - Login required';
+            document.getElementById('customerStatus').className = 'status status-pending';
+            document.getElementById('driverStatus').textContent = '🟡 Connected - Login required';
+            document.getElementById('driverStatus').className = 'status status-pending';
+        });
+        
+        socket.on('disconnect', () => {
+            consoleLog('❌ Server bilan aloqa uzildi', 'error');
+            document.getElementById('customerStatus').textContent = '🔴 Offline';
+            document.getElementById('customerStatus').className = 'status status-offline';
+            document.getElementById('driverStatus').textContent = '🔴 Offline';
+            document.getElementById('driverStatus').className = 'status status-offline';
+        });
+        
+        // Auth responses
+        socket.on('auth_success', (data) => {
+            consoleLog(`✅ Login muvaffaqiyatli: ${data.role} - ${data.message}`, 'success');
+            
+            if (data.role === 'user') {
+                customerLoggedIn = true;
+                document.getElementById('customerStatus').textContent = 
+                    `🟢 Online (Active drivers: ${data.activeDrivers})`;
+                document.getElementById('customerStatus').className = 'status status-online';
+                document.getElementById('custLoginBtn').textContent = '✅ Logged In';
+                document.getElementById('custLoginBtn').disabled = true;
+                document.getElementById('createOrderBtn').disabled = false;
+                updateStep(2);
+            } else {
+                driverLoggedIn = true;
+                document.getElementById('driverStatus').textContent = 
+                    `🟢 Online - Ready for orders`;
+                document.getElementById('driverStatus').className = 'status status-online';
+                document.getElementById('drvLoginBtn').textContent = '🟢 Online';
+                document.getElementById('drvLoginBtn').disabled = true;
+                updateStep(1);
+            }
+        });
+        
+        socket.on('auth_error', (msg) => {
+            consoleLog('❌ Login xatosi: ' + msg, 'error');
+        });
+        
+        // Order events
+        socket.on('order_created', (data) => {
+            consoleLog(`📦 Buyurtma yaratildi: ${data.orderId}`, 'success');
+            consoleLog(`ℹ️ ${data.message}`, 'info');
+            document.getElementById('createOrderBtn').textContent = '⏳ Kutilmoqda...';
+            document.getElementById('createOrderBtn').disabled = true;
+            updateStep(3);
+        });
+        
+        socket.on('order_error', (msg) => {
+            consoleLog('❌ Buyurtma xatosi: ' + msg, 'error');
+        });
+        
+        socket.on('no_drivers', (data) => {
+            consoleLog('⚠️ ' + data.message, 'warn');
+            document.getElementById('createOrderBtn').textContent = '📦 Buyurtma Berish';
+            document.getElementById('createOrderBtn').disabled = false;
+        });
+        
+        // 🔥 ASOSIY EVENT: Driverga buyurtma keldi!
+        socket.on('new_order', (order) => {
+            consoleLog('🔥 YANGI BUYURTMA KELDI!', 'success');
+            consoleLog(`   Mijoz: ${order.customerName}`, 'info');
+            consoleLog(`   Suv: ${order.waterAmount} dona`, 'info');
+            consoleLog(`   Masofa: ${order.distance}`, 'info');
+            
+            document.getElementById('noOrders').style.display = 'none';
+            
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'order-item';
+            orderDiv.id = 'order-' + order.orderId;
+            orderDiv.innerHTML = `
+                <div class="order-header">
+                    <span class="order-id">#${order.orderId}</span>
+                    <span class="order-status status-new">Yangi</span>
+                </div>
+                <div class="order-detail"><strong>👤 Mijoz:</strong> ${order.customerName}</div>
+                <div class="order-detail"><strong>💧 Suv:</strong> ${order.waterAmount} dona</div>
+                <div class="order-detail"><strong>📍 Masofa:</strong> ${order.distance}</div>
+                <div class="order-detail"><strong>📌 Manzil:</strong> ${order.address}</div>
+                <button class="btn-driver" onclick="acceptOrder('${order.orderId}')" style="margin-top: 10px;">
+                    ✅ Buyurtma Olish
+                </button>
+            `;
+            
+            document.getElementById('driverOrders').appendChild(orderDiv);
+        });
+        
+        socket.on('order_accepted_success', (data) => {
+            consoleLog(`✅ Siz buyurtma oldingiz: ${data.orderId}`, 'success');
+            document.getElementById('acceptedCustomer').textContent = data.customerName;
+            document.getElementById('driverSuccess').classList.add('show');
+            updateStep(4);
+        });
+        
+        socket.on('order_accepted', (data) => {
+            consoleLog(`🎉 Suvchi topildi: ${data.driverName}`, 'success');
+            consoleLog(`   Xabar: ${data.message}`, 'info');
+            document.getElementById('foundDriverName').textContent = data.driverName;
+            document.getElementById('customerSuccess').classList.add('show');
+            document.getElementById('createOrderBtn').textContent = '✅ Buyurtma Bajarilmoqda';
+        });
+        
+        socket.on('order_taken', (data) => {
+            consoleLog(`⚠️ Buyurtma ${data.driverName} tomonidan olindi`, 'warn');
+            const orderEl = document.getElementById('order-' + data.orderId);
+            if (orderEl) {
+                orderEl.style.opacity = '0.5';
+                orderEl.querySelector('.order-status').textContent = 'Band';
+                orderEl.querySelector('.order-status').className = 'order-status status-accepted';
+                orderEl.querySelector('button').disabled = true;
+                orderEl.querySelector('button').textContent = '❌ Olingan';
+            }
+        });
+        
+        socket.on('accept_error', (msg) => {
+            consoleLog('❌ Olish xatosi: ' + msg, 'error');
+        });
+        
+        // Functions
+        function customerLogin() {
+            const id = document.getElementById('custId').value;
+            const name = document.getElementById('custName').value;
+            if (!id || !name) {
+                consoleLog('❌ Iltimos, barcha maydonlarni to\'ldiring', 'error');
+                return;
+            }
+            socket.emit('auth', { userId: id, role: 'user', name: name });
+            consoleLog('🔐 Mijoz login yuborilmoqda...', 'info');
+        }
+        
+        function driverLogin() {
+            const id = document.getElementById('drvId').value;
+            const name = document.getElementById('drvName').value;
+            if (!id || !name) {
+                consoleLog('❌ Iltimos, barcha maydonlarni to\'ldiring', 'error');
+                return;
+            }
+            socket.emit('auth', { userId: id, role: 'driver', name: name });
+            consoleLog('🔐 Suvchi login yuborilmoqda...', 'info');
+            
+            // Auto send location
+            updateDriverLocation();
+        }
+        
+        function updateDriverLocation() {
+            if (!driverLoggedIn) {
+                consoleLog('⚠️ Avval login qiling', 'warn');
+                return;
+            }
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        currentLocation = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude
+                        };
+                        socket.emit('update_location', currentLocation);
+                        consoleLog(`📍 Joylashuv: ${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`, 'info');
+                    },
+                    (err) => {
+                        socket.emit('update_location', currentLocation);
+                        consoleLog(`📍 Default joylashuv yuborildi`, 'info');
+                    }
+                );
+            }
+        }
+        
+        function createOrder() {
+            if (!customerLoggedIn) {
+                consoleLog('❌ Avval login qiling!', 'error');
+                return;
+            }
+            
+            const address = document.getElementById('custAddress').value;
+            const water = parseInt(document.getElementById('custWater').value);
+            
+            // Try to get real location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        sendOrder({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude
+                        }, address, water);
+                    },
+                    (err) => {
+                        sendOrder(currentLocation, address, water);
+                    }
+                );
+            } else {
+                sendOrder(currentLocation, address, water);
+            }
+        }
+        
+        function sendOrder(location, address, water) {
+            consoleLog('📤 Buyurtma yuborilmoqda...', 'info');
+            socket.emit('create_order', {
+                location: location,
+                waterAmount: water,
+                address: address
+            });
+        }
+        
+        function acceptOrder(orderId) {
+            consoleLog(`🤚 Buyurtma olinmoqda: ${orderId}...`, 'info');
+            socket.emit('accept_order', { orderId: orderId });
+        }
+    </script>
+</body>
+</html>
