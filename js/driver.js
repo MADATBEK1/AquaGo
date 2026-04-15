@@ -60,37 +60,47 @@ function initDriverDashboard() {
     window.addEventListener('storage', (e) => {
         if (e.key === 'aquago_orders') {
             const orders = JSON.parse(e.newValue || '[]');
+            console.log('[Driver] Storage event - orders updated:', orders.length);
             handleOrdersUpdate(orders);
         }
     });
 
     window.addEventListener('aquago_orders_updated', (e) => {
-        handleOrdersUpdate(e.detail || []);
+        const orders = e.detail || [];
+        console.log('[Driver] Custom event - orders updated:', orders.length);
+        handleOrdersUpdate(orders);
     });
 
     showExistingOrdersOnMap();
 
-    // Force sync orders every 5 seconds (only if server available)
+    // Force sync orders every 3 seconds (only if server available)
     setInterval(() => {
-        if (window._aquagoServer && _online) {
+        if (window._aquagoServer) {
+            console.log('[Driver] Polling for orders...');
             fetch(window._aquagoServer + '/api/orders', {
                 headers: { 'Cache-Control': 'no-cache' }
             }).then(r => r.json()).then(orders => {
                 if (Array.isArray(orders)) {
                     const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+                    const currentPending = currentOrders.filter(o => o.status === 'pending');
+                    const newPending = orders.filter(o => o.status === 'pending');
+                    
                     if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
                         localStorage.setItem('aquago_orders', JSON.stringify(orders));
                         window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-                        console.log('[Driver] Force synced orders:', orders.length);
+                        console.log('[Driver] Orders synced:', orders.length, 'total,', newPending.length, 'pending');
                     }
                 }
-            }).catch(() => {});
+            }).catch(err => {
+                console.error('[Driver] Poll error:', err);
+            });
         } else {
             // HTML mode - just refresh from localStorage
             const orders = DB.getOrders();
+            console.log('[Driver] HTML mode - checking orders:', orders.length);
             window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
         }
-    }, 5000);
+    }, 3000);
 }
 
 // ============================================================
@@ -142,8 +152,24 @@ function updateDriverMarker(lat, lng, heading = 0) {
 }
 
 function addOrderMarkerToMap(order) {
+    if (!order || !order.id) {
+        console.warn('[Driver] Invalid order:', order);
+        return;
+    }
     if (orderMarkers[order.id]) return;
-    if (order.status !== 'pending') return;
+    if (order.status !== 'pending') {
+        console.log('[Driver] Order not pending:', order.id, order.status);
+        return;
+    }
+
+    // Handle different location field names
+    const lat = order.lat || order.location?.lat;
+    const lng = order.lng || order.location?.lng;
+    
+    if (!lat || !lng) {
+        console.warn('[Driver] Order missing coordinates:', order.id);
+        return;
+    }
 
     const html = `
     <div style="
@@ -158,14 +184,14 @@ function addOrderMarkerToMap(order) {
     ">💧</div>
   `;
 
-    const marker = L.marker([order.lat, order.lng], {
+    const marker = L.marker([lat, lng], {
         icon: L.divIcon({ html, className: '', iconAnchor: [24, 24] })
     }).addTo(driverMap);
 
     marker.bindPopup(`
     <div style="color:#f0f9ff; padding:6px; min-width:160px;">
-      <strong style="font-size:1rem;">👤 ${order.userName}</strong><br/>
-      <span style="color:#94a3b8; font-size:0.85rem;">📱 ${order.userPhone}</span><br/>
+      <strong style="font-size:1rem;">👤 ${order.userName || order.customerName || 'Mijoz'}</strong><br/>
+      <span style="color:#94a3b8; font-size:0.85rem;">📱 ${order.userPhone || order.phone || '—'}</span><br/>
       <span style="color:#94a3b8; font-size:0.82rem;">🕐 ${formatTimeAgo(order.createdAt)}</span><br/>
       <button onclick="document.getElementById('acceptBtn').click()"
         style="margin-top:8px;padding:6px 12px;background:#22c55e;border:none;border-radius:6px;color:white;font-weight:700;cursor:pointer;width:100%;">
@@ -522,8 +548,15 @@ function checkForNewOrders() {
 }
 
 function handleOrdersUpdate(orders) {
+    console.log('[Driver] handleOrdersUpdate called, orders:', orders.length);
     const pending = orders.filter(o => o.status === 'pending');
-    pending.forEach(o => addOrderMarkerToMap(o));
+    console.log('[Driver] Pending orders:', pending.length);
+    
+    pending.forEach(o => {
+        addOrderMarkerToMap(o);
+        console.log('[Driver] Added marker for order:', o.id);
+    });
+    
     if (!isOnline || activeOrderId) {
         // Check if active order got paid
         if (activeOrderId) {
@@ -537,9 +570,19 @@ function handleOrdersUpdate(orders) {
         }
         return;
     }
-    if (pending.length === 0) return;
+    
+    if (pending.length === 0) {
+        console.log('[Driver] No pending orders');
+        return;
+    }
+    
     const firstOrder = pending[0];
-    if (pendingAlertId === firstOrder.id) return;
+    if (pendingAlertId === firstOrder.id) {
+        console.log('[Driver] Order already alerted:', firstOrder.id);
+        return;
+    }
+    
+    console.log('[Driver] NEW ORDER ALERT:', firstOrder.id);
     pendingAlertId = firstOrder.id;
     showNewOrderAlert(firstOrder);
 }
@@ -548,14 +591,19 @@ function handleOrdersUpdate(orders) {
 // ALERT UI
 // ============================================================
 function showNewOrderAlert(order) {
-    document.getElementById('alertUserName').textContent = order.userName;
+    // Handle different field names
+    const userName = order.userName || order.customerName || 'Mijoz';
+    const userPhone = order.userPhone || order.phone || '—';
+    const address = order.address || order.location?.address || '📍 Joylashuv aniqlangan';
+    
+    document.getElementById('alertUserName').textContent = userName;
     document.getElementById('alertUserDist').textContent = calcDist(order);
-    document.getElementById('alertAddress').textContent = order.address || '📍 Joylashuv aniqlangan';
+    document.getElementById('alertAddress').textContent = address;
     document.getElementById('newOrderAlert').classList.remove('hidden');
     document.getElementById('ordersEmpty').classList.add('hidden');
     document.getElementById('newOrderBadge').classList.remove('hidden');
 
-    showNotifPopup('🔔 Yangi buyurtma keldi!', `${order.userName} suv buyurdi`);
+    showNotifPopup('🔔 Yangi buyurtma keldi!', `${userName} suv buyurdi`);
     playBeep();
 
     let timerPct = 100;

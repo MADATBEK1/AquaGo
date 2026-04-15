@@ -180,8 +180,18 @@ const handler = (req, res) => {
     // POST /api/orders  (single new order)
     if (url === '/api/orders' && mtd === 'POST') {
         body(req).then(order => {
-            if (!dbOrders.find(o => o.id === order.id)) { dbOrders.unshift(order); save(); }
+            console.log('[SERVER] New order received:', order.id);
+            if (!dbOrders.find(o => o.id === order.id)) {
+                // Ensure order has required fields
+                if (!order.status) order.status = 'pending';
+                if (!order.createdAt) order.createdAt = Date.now();
+                dbOrders.unshift(order);
+                save();
+                console.log('[SERVER] Order saved to DB, total orders:', dbOrders.length);
+            }
+            // Push to all SSE clients immediately
             push('orders', dbOrders);
+            console.log('[SERVER] SSE push sent to', clients.size, 'clients');
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ ok: true, order }));
         });

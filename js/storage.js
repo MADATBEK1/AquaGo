@@ -143,20 +143,25 @@ function _connectSSE() {
                     _resolvedBase.includes('netlify.com');
 
   if (isNetlify) {
+    console.log('[AquaGo] Using polling mode (Netlify)');
     _startPolling();
     return;
   }
 
   // Lokal server – SSE ishlatamiz
   try {
+    console.log('[AquaGo] Connecting to SSE:', _resolvedBase + '/api/events');
     _sse = new EventSource(_resolvedBase + '/api/events');
 
     _sse.addEventListener('orders', e => {
       try {
         const orders = JSON.parse(e.data);
+        console.log('[AquaGo] SSE orders received:', orders.length, 'orders');
         localStorage.setItem('aquago_orders', JSON.stringify(orders));
         window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-      } catch { }
+      } catch (err) {
+        console.error('[AquaGo] SSE orders error:', err);
+      }
     });
 
     _sse.addEventListener('users', e => {
@@ -181,7 +186,13 @@ function _connectSSE() {
       } catch { }
     });
 
+    _sse.addEventListener('open', () => {
+      console.log('[AquaGo] SSE connection opened');
+      _online = true;
+    });
+
     _sse.onerror = () => {
+      console.error('[AquaGo] SSE error, switching to polling');
       _sse.close();
       _sse = null;
       _online = false;
@@ -189,7 +200,8 @@ function _connectSSE() {
       // SSE ishlamasa polling'ga o'tamiz
       _startPolling();
     };
-  } catch {
+  } catch (err) {
+    console.error('[AquaGo] SSE connection failed:', err);
     _startPolling();
   }
 }
@@ -223,8 +235,10 @@ async function _poll() {
       if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
         localStorage.setItem('aquago_orders', JSON.stringify(orders));
         window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-        console.log('[AquaGo] Orders synced:', orders.length, 'orders');
+        console.log('[AquaGo] Polling: Orders synced:', orders.length, 'orders');
       }
+    } else {
+      console.warn('[AquaGo] Polling: Invalid orders response');
     }
 
     // Users ni /api/users dan olish
