@@ -72,14 +72,10 @@ async function _detectServer() {
     candidates.unshift(location.origin);
   }
 
-  // For HTML file mode - try to work without server first
+  // For HTML file mode - still try server candidates (don't bail out)
   if (location.protocol === 'file:') {
-    console.log('[AquaGo] HTML file mode - working offline');
-    window._aquagoServer = null;
-    _online = false;
-    // Still try to connect to server in background
-    setTimeout(() => _detectServer(), 1000);
-    return;
+    console.log('[AquaGo] HTML file mode - trying server candidates...');
+    // Don't return early — fall through to try all candidates below
   }
 
   for (const base of candidates) {
@@ -192,13 +188,16 @@ function _connectSSE() {
     });
 
     _sse.onerror = () => {
-      console.error('[AquaGo] SSE error, switching to polling');
+      console.error('[AquaGo] SSE xatosi – 5s da qayta ulaniladi...');
       _sse.close();
       _sse = null;
-      _online = false;
-      window._aquagoServer = null;
-      // SSE ishlamasa polling'ga o'tamiz
-      _startPolling();
+      // _resolvedBase va window._aquagoServer ni tozalamaslik!
+      // Polling ham ishga tushirish (SSE qayta ulangunch)
+      if (!_pollTimer) _startPolling();
+      // 5 soniyadan keyin SSE qayta ulanish urinish
+      setTimeout(() => {
+        if (!_sse) _connectSSE();
+      }, 5000);
     };
   } catch (err) {
     console.error('[AquaGo] SSE connection failed:', err);
@@ -376,10 +375,34 @@ const DB = {
     // Trigger cross-tab sync event
     window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
     
-    // Server: just add this order (if online)
-    if (_online && _resolvedBase) {
-      _post('/api/orders', order);
-    }
+    // Server: always try to send the order, even if _online flag is false
+    // Use best-effort POST with retry
+    const _sendOrderToServer = (retries = 3) => {
+      const base = _resolvedBase || window._aquagoServer;
+      if (!base) {
+        // Server hali topilmagan — qisqa kutib, qayta urinish
+        if (retries > 0) {
+          setTimeout(() => _sendOrderToServer(retries - 1), 2000);
+        }
+        return;
+      }
+      fetch(base + '/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      }).then(r => {
+        if (r.ok) {
+          console.log('[AquaGo] Order sent to server:', order.id);
+          _online = true;
+          window._aquagoServer = base;
+        } else if (retries > 0) {
+          setTimeout(() => _sendOrderToServer(retries - 1), 2000);
+        }
+      }).catch(() => {
+        if (retries > 0) setTimeout(() => _sendOrderToServer(retries - 1), 2000);
+      });
+    };
+    _sendOrderToServer();
     return order;
   },
   getOrderById(id) { return this.getOrders().find(o => o.id === id); },

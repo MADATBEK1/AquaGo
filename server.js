@@ -1,8 +1,9 @@
 /**
- * AquaGo – Server v3
+ * AquaGo – Server v4 (with Database)
  * Port: 7474  (IjaraGo: 8080 – to'qnashuv yo'q)
  * HTTP + REST API + Server-Sent Events = real-time cross-device sync
  * + Tunnel: boshqa tarmoqdan ham kirish imkoniyati
+ * + Database: lowdb for persistent storage
  */
 
 const http = require('http');
@@ -14,36 +15,36 @@ const { spawn } = require('child_process');
 const ROOT = __dirname;
 const PORT = process.env.PORT || 7474;
 
-// ── Persistent DB ────────────────────────────────────────
-const DB_ORDERS = path.join(ROOT, '.db_orders.json');
-const DB_USERS = path.join(ROOT, '.db_users.json');
-const DB_MSGS = path.join(ROOT, '.db_messages.json');
+// ── Database ───────────────────────────────────────────────
+// Use cloud database if DATABASE_URL is present, otherwise use local lowdb
+const db = process.env.DATABASE_URL ? require('./database-cloud') : require('./database');
+let dbInitialized = false;
 
+// ── In-memory cache for SSE (synced with database) ──────────
 let dbOrders = [];
 let dbUsers = [];
-let dbMessages = [];     // chat xabarlari
-let driverLocs = {};     // { driverId: { lat, lng, heading, ts } }
+let dbMessages = [];
+let driverLocs = {};
 
-try { dbOrders = JSON.parse(fs.readFileSync(DB_ORDERS, 'utf8')); } catch { }
-try { dbUsers = JSON.parse(fs.readFileSync(DB_USERS, 'utf8')); } catch { }
-try { dbMessages = JSON.parse(fs.readFileSync(DB_MSGS, 'utf8')); } catch { }
-
-// ── Demo accountlarni har doim ta'minlash ──────────────────
-const DEMO_USERS = [
-    { id: 'driver-demo', name: 'Alisher Suvchi', phone: '+998901234567', password: '123456', vehicle: '01 A 777 BC', role: 'driver', createdAt: Date.now(), todayEarnings: 0, completedCount: 0 },
-    { id: 'user-demo', name: 'Bobur Abdullayev', phone: '+998907654321', password: '123456', role: 'user', createdAt: Date.now() }
-];
-for (const demo of DEMO_USERS) {
-    if (!dbUsers.find(u => u.id === demo.id)) {
-        dbUsers.push(demo);
+// ── Sync cache with database ─────────────────────────────────
+async function syncCache() {
+    if (!dbInitialized) {
+        await db.initDatabase();
+        dbInitialized = true;
     }
+    
+    dbOrders = await db.getOrders();
+    dbUsers = await db.getUsers();
+    dbMessages = await db.getMessages();
+    driverLocs = await db.getDriverLocations();
+    
+    console.log('[Server] Cache synced:', {
+        orders: dbOrders.length,
+        users: dbUsers.length,
+        messages: dbMessages.length,
+        drivers: Object.keys(driverLocs).length
+    });
 }
-
-const save = () => {
-    try { fs.writeFileSync(DB_ORDERS, JSON.stringify(dbOrders)); } catch { }
-    try { fs.writeFileSync(DB_USERS, JSON.stringify(dbUsers)); } catch { }
-    try { fs.writeFileSync(DB_MSGS, JSON.stringify(dbMessages.slice(-200))); } catch { }
-};
 
 // ── SSE clients ──────────────────────────────────────────
 const clients = new Set();
@@ -70,7 +71,7 @@ const body = req => new Promise(ok => {
 let tunnelUrl = null;
 
 // ── Router ───────────────────────────────────────────────
-const handler = (req, res) => {
+const handler = async (req, res) => {
     const url = req.url.split('?')[0];
     const mtd = req.method.toUpperCase();
 
@@ -88,9 +89,10 @@ const handler = (req, res) => {
 
     // ── DRIVER LOCATION (lightweight POST, no SSE overhead) ─────
     if (url === '/api/driver-location' && mtd === 'POST') {
-        body(req).then(({ driverId, lat, lng, heading }) => {
+        body(req).then(async ({ driverId, lat, lng, heading }) => {
             if (driverId) {
-                driverLocs[driverId] = { lat, lng, heading, ts: Date.now() };
+                await db.updateDriverLocation(driverId, { lat, lng, heading });
+                driverLocs = await db.getDriverLocations(); // Sync cache
                 push('driver-location', { driverId, lat, lng, heading });
             }
             res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -99,8 +101,9 @@ const handler = (req, res) => {
         return;
     }
     if (url === '/api/driver-location' && mtd === 'GET') {
+        const locs = await db.getDriverLocations();
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(driverLocs));
+        res.end(JSON.stringify(locs));
         return;
     }
 
@@ -108,20 +111,21 @@ const handler = (req, res) => {
     if (url.startsWith('/api/messages')) {
         const orderId = new URL('http://x' + req.url).searchParams.get('orderId');
         if (mtd === 'GET') {
-            const msgs = orderId ? dbMessages.filter(m => m.orderId === orderId) : dbMessages.slice(-50);
+            const msgs = await db.getMessages();
+            const filtered = orderId ? msgs.filter(m => m.orderId === orderId) : msgs.slice(-50);
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(msgs));
+            res.end(JSON.stringify(filtered));
             return;
         }
         if (mtd === 'POST') {
-            body(req).then(msg => {
+            body(req).then(async msg => {
                 msg.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
                 msg.ts = Date.now();
-                dbMessages.push(msg);
-                save();
-                push('message', msg);
+                const created = await db.createMessage(msg);
+                dbMessages = await db.getMessages(); // Sync cache
+                push('message', created);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ ok: true, msg }));
+                res.end(JSON.stringify({ ok: true, msg: created }));
             });
             return;
         }
@@ -129,10 +133,13 @@ const handler = (req, res) => {
 
     // ── RATINGS ──────────────────────────────────────────────────
     if (url === '/api/ratings' && mtd === 'POST') {
-        body(req).then(rating => {
+        body(req).then(async rating => {
             // Save rating to order
-            const i = dbOrders.findIndex(o => o.id === rating.orderId);
-            if (i >= 0) { dbOrders[i].rating = rating; save(); push('orders', dbOrders); }
+            const updated = await db.updateOrder(rating.orderId, { rating });
+            if (updated) {
+                dbOrders = await db.getOrders(); // Sync cache
+                push('orders', dbOrders);
+            }
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end('{"ok":true}');
         });
@@ -158,49 +165,56 @@ const handler = (req, res) => {
 
     // GET /api/users
     if (url === '/api/users' && mtd === 'GET') {
+        const users = await db.getUsers();
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(dbUsers));
+        res.end(JSON.stringify(users));
         return;
     }
-    // POST /api/users  (full replace)
+    // POST /api/users
     if (url === '/api/users' && mtd === 'POST') {
-        body(req).then(u => {
-            dbUsers = u; save(); push('users', dbUsers);
-            res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"ok":true}');
+        body(req).then(async user => {
+            const created = await db.createUser(user);
+            dbUsers = await db.getUsers();
+            push('users', dbUsers);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true, user: created }));
         });
         return;
     }
 
     // GET /api/orders
     if (url === '/api/orders' && mtd === 'GET') {
+        const orders = await db.getOrders();
+        dbOrders = orders; // Sync cache
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(dbOrders));
+        res.end(JSON.stringify(orders));
         return;
     }
     // POST /api/orders  (single new order)
     if (url === '/api/orders' && mtd === 'POST') {
-        body(req).then(order => {
+        body(req).then(async order => {
             console.log('[SERVER] New order received:', order.id);
-            if (!dbOrders.find(o => o.id === order.id)) {
-                // Ensure order has required fields
-                if (!order.status) order.status = 'pending';
-                if (!order.createdAt) order.createdAt = Date.now();
-                dbOrders.unshift(order);
-                save();
-                console.log('[SERVER] Order saved to DB, total orders:', dbOrders.length);
-            }
+            const created = await db.createOrder(order);
+            dbOrders = await db.getOrders(); // Sync cache
             // Push to all SSE clients immediately
             push('orders', dbOrders);
             console.log('[SERVER] SSE push sent to', clients.size, 'clients');
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ ok: true, order }));
+            res.end(JSON.stringify({ ok: true, order: created }));
         });
         return;
     }
     // PUT /api/orders  (full replace)
     if (url === '/api/orders' && mtd === 'PUT') {
-        body(req).then(orders => {
-            if (Array.isArray(orders)) { dbOrders = orders; save(); push('orders', dbOrders); }
+        body(req).then(async orders => {
+            if (Array.isArray(orders)) {
+                // Delete all existing orders and add new ones
+                for (const order of orders) {
+                    await db.createOrder(order);
+                }
+                dbOrders = await db.getOrders(); // Sync cache
+                push('orders', dbOrders);
+            }
             res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"ok":true}');
         });
         return;
@@ -208,12 +222,13 @@ const handler = (req, res) => {
     // PATCH /api/orders/:id
     const pm = url.match(/^\/api\/orders\/([^/]+)$/);
     if (pm && (mtd === 'PATCH' || mtd === 'PUT')) {
-        body(req).then(upd => {
-            const i = dbOrders.findIndex(o => o.id === pm[1]);
-            if (i >= 0) {
-                dbOrders[i] = { ...dbOrders[i], ...upd }; save(); push('orders', dbOrders);
+        body(req).then(async upd => {
+            const updated = await db.updateOrder(pm[1], upd);
+            if (updated) {
+                dbOrders = await db.getOrders(); // Sync cache
+                push('orders', dbOrders);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ ok: true, order: dbOrders[i] }));
+                res.end(JSON.stringify({ ok: true, order: updated }));
             } else { res.writeHead(404); res.end('{}'); }
         });
         return;
@@ -242,12 +257,15 @@ function getIP() {
 const IP = getIP();
 
 http.createServer(handler).listen(PORT, '0.0.0.0', async () => {
+    // Initialize database and sync cache
+    await syncCache();
+    
     const localUrl = `http://${IP}:${PORT}`;
     const { exec } = require('child_process');
 
     console.clear();
     console.log('\n╔════════════════════════════════════════════════════════╗');
-    console.log('║         🌊  AquaGo – Real-time Sync Server              ║');
+    console.log('║         🌊  AquaGo – Real-time Sync Server (DB)      ║');
     console.log('╠════════════════════════════════════════════════════════╣');
     console.log('║                                                        ║');
     console.log('║  💻  Kompyuter (brauzer avtomatik ochiladi)             ║');

@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "dev": "node server.js",
     "electron": "node_modules\\electron\\dist\\electron.exe .",
     "electron:build": "node node_modules\\electron-builder\\cli.js --win --x64",
     "cap:init": "node node_modules\\@capacitor\\cli\\bin\\capacitor init AquaGo uz.aquago.app --web-dir .",
@@ -69,6 +70,8 @@
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "localtunnel": "^2.0.2",
+    "lowdb": "^7.0.1",
+    "pg": "^8.20.0",
     "selfsigned": "^5.5.0",
     "socket.io": "^4.8.3"
   }

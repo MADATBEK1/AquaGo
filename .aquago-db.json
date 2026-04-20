@@ -1,0 +1,96 @@
+{
+  "orders": [
+    {
+      "id": "mo4e5sabe31uv",
+      "userId": "mo4e5lmyo59hc",
+      "userName": "madatbek",
+      "userPhone": "67553587346598",
+      "lat": 41.19433918996122,
+      "lng": 61.309821681982676,
+      "status": "pending",
+      "createdAt": 1776520035443,
+      "address": "Joylashuv: 41.1944, 61.3098\n📦 1 x 19L Kalyonka | Naqd",
+      "waterType": "19L Kalyonka",
+      "paymentType": "Naqd",
+      "quantity": 1,
+      "driverId": null,
+      "driverName": null,
+      "completedAt": null,
+      "rating": null
+    },
+    {
+      "id": "mo4dhxavyy0od",
+      "userId": "user-demo",
+      "userName": "Bobur Abdullayev",
+      "userPhone": "+998907654321",
+      "lat": 41.19477748212498,
+      "lng": 61.30930517739772,
+      "status": "pending",
+      "createdAt": 1776518922199,
+      "address": "Joylashuv: 41.1944, 61.3098\n📦 1 x 19L Kalyonka | Naqd",
+      "waterType": "19L Kalyonka",
+      "paymentType": "Naqd",
+      "quantity": 1,
+      "driverId": null,
+      "driverName": null,
+      "completedAt": null,
+      "rating": null
+    }
+  ],
+  "users": [
+    {
+      "id": "driver-demo",
+      "name": "Alisher Suvchi",
+      "phone": "+998901234567",
+      "password": "123456",
+      "vehicle": "01 A 777 BC",
+      "role": "driver",
+      "createdAt": 1776518902881,
+      "todayEarnings": 0,
+      "completedCount": 0
+    },
+    {
+      "id": "user-demo",
+      "name": "Bobur Abdullayev",
+      "phone": "+998907654321",
+      "password": "123456",
+      "role": "user",
+      "createdAt": 1776518902881
+    },
+    [
+      {
+        "id": "driver-demo",
+        "name": "Alisher Suvchi",
+        "phone": "+998901234567",
+        "password": "123456",
+        "vehicle": "01 A 777 BC",
+        "role": "driver",
+        "createdAt": 1776518902881,
+        "todayEarnings": 0,
+        "completedCount": 0
+      },
+      {
+        "id": "user-demo",
+        "name": "Bobur Abdullayev",
+        "phone": "+998907654321",
+        "password": "123456",
+        "role": "user",
+        "createdAt": 1776518902881
+      },
+      {
+        "id": "mo4e5lmyo59hc",
+        "name": "madatbek",
+        "phone": "67553587346598",
+        "password": "madatbek",
+        "vehicle": null,
+        "cardNumber": null,
+        "role": "user",
+        "createdAt": 1776520026826,
+        "todayEarnings": 0,
+        "completedCount": 0
+      }
+    ]
+  ],
+  "messages": [],
+  "driverLocations": {}
+}

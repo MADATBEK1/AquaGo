@@ -184,27 +184,54 @@ function initUserDashboard() {
         showLocationDialog();
     }
 
-    // Force sync orders every 5 seconds (only if server available)
-    setInterval(() => {
-        if (window._aquagoServer && _online) {
-            fetch(window._aquagoServer + '/api/orders', {
-                headers: { 'Cache-Control': 'no-cache' }
-            }).then(r => r.json()).then(orders => {
-                if (Array.isArray(orders)) {
-                    const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
-                    if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
-                        localStorage.setItem('aquago_orders', JSON.stringify(orders));
-                        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-                        console.log('[User] Force synced orders:', orders.length);
-                    }
+    // Force sync orders every 5 seconds
+    const _userKnownServers = [
+        `https://web-production-12311.up.railway.app`,
+        `http://localhost:7474`,
+        `http://127.0.0.1:7474`
+    ];
+    const _uSavedIP = localStorage.getItem('aquago_server_ip');
+    if (_uSavedIP) _userKnownServers.unshift(`http://${_uSavedIP}:7474`);
+    const _uSavedTunnel = localStorage.getItem('aquago_tunnel_url');
+    if (_uSavedTunnel) _userKnownServers.unshift(_uSavedTunnel);
+
+    async function _userFetchOrders() {
+        const base = window._aquagoServer ||
+                     (location.protocol !== 'file:' ? location.origin : null);
+        const targets = base ? [base] : _userKnownServers;
+
+        for (const url of targets) {
+            try {
+                const r = await fetch(url + '/api/orders', {
+                    headers: { 'Cache-Control': 'no-cache' },
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (!r.ok) continue;
+                const orders = await r.json();
+                if (!Array.isArray(orders)) continue;
+
+                if (!window._aquagoServer) {
+                    window._aquagoServer = url;
+                    console.log('[User] Server topildi:', url);
                 }
-            }).catch(() => {});
-        } else {
-            // HTML mode - just refresh from localStorage
-            const orders = DB.getOrders();
-            window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+
+                const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+                if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
+                    localStorage.setItem('aquago_orders', JSON.stringify(orders));
+                    window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+                    console.log('[User] Orders synced:', orders.length);
+                }
+                return;
+            } catch { /* keyingiga o'tish */ }
         }
-    }, 5000);
+
+        // Oflayn – localStorage dan o'qish
+        const orders = DB.getOrders();
+        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+    }
+
+    _userFetchOrders();
+    setInterval(_userFetchOrders, 5000);
 }
 
 // ─── LOCATION ────────────────────────────────────────

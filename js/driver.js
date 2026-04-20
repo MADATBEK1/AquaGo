@@ -73,34 +73,59 @@ function initDriverDashboard() {
 
     showExistingOrdersOnMap();
 
-    // Force sync orders every 3 seconds (only if server available)
-    setInterval(() => {
-        if (window._aquagoServer) {
-            console.log('[Driver] Polling for orders...');
-            fetch(window._aquagoServer + '/api/orders', {
-                headers: { 'Cache-Control': 'no-cache' }
-            }).then(r => r.json()).then(orders => {
-                if (Array.isArray(orders)) {
-                    const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
-                    const currentPending = currentOrders.filter(o => o.status === 'pending');
-                    const newPending = orders.filter(o => o.status === 'pending');
-                    
-                    if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
-                        localStorage.setItem('aquago_orders', JSON.stringify(orders));
-                        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
-                        console.log('[Driver] Orders synced:', orders.length, 'total,', newPending.length, 'pending');
-                    }
+    // ── Serverdan buyurtmalarni olish (har 3 soniyada) ────────
+    // window._aquagoServer null bo'lsa ham urinib ko'radi
+    const _knownServers = [
+        `https://web-production-12311.up.railway.app`,
+        `http://localhost:7474`,
+        `http://127.0.0.1:7474`
+    ];
+    const savedIP = localStorage.getItem('aquago_server_ip');
+    if (savedIP) _knownServers.unshift(`http://${savedIP}:7474`);
+    const savedTunnel = localStorage.getItem('aquago_tunnel_url');
+    if (savedTunnel) _knownServers.unshift(savedTunnel);
+
+    async function _driverFetchOrders() {
+        const base = window._aquagoServer ||
+                     (location.protocol !== 'file:' ? location.origin : null);
+        const targets = base ? [base] : _knownServers;
+
+        for (const url of targets) {
+            try {
+                const r = await fetch(url + '/api/orders', {
+                    headers: { 'Cache-Control': 'no-cache' },
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (!r.ok) continue;
+                const orders = await r.json();
+                if (!Array.isArray(orders)) continue;
+
+                // Server topildi – saqlash
+                if (!window._aquagoServer) {
+                    window._aquagoServer = url;
+                    console.log('[Driver] Server topildi:', url);
                 }
-            }).catch(err => {
-                console.error('[Driver] Poll error:', err);
-            });
-        } else {
-            // HTML mode - just refresh from localStorage
-            const orders = DB.getOrders();
-            console.log('[Driver] HTML mode - checking orders:', orders.length);
-            window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+
+                const currentOrders = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+                const newPending = orders.filter(o => o.status === 'pending');
+                if (JSON.stringify(orders) !== JSON.stringify(currentOrders)) {
+                    localStorage.setItem('aquago_orders', JSON.stringify(orders));
+                    window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+                    console.log('[Driver] Orders synced:', orders.length, 'total,', newPending.length, 'pending');
+                }
+                return; // muvaffaqiyatli
+            } catch { /* keyingiga o'tish */ }
         }
-    }, 3000);
+
+        // Server topilmasa localStorage dan o'qish
+        const orders = DB.getOrders();
+        console.log('[Driver] Oflayn rejim – localStorage:', orders.length, 'buyurtma');
+        window.dispatchEvent(new CustomEvent('aquago_orders_updated', { detail: orders }));
+    }
+
+    // Darhol bir marta chaqirish, keyin har 3 soniyada
+    _driverFetchOrders();
+    setInterval(_driverFetchOrders, 3000);
 }
 
 // ============================================================
@@ -548,41 +573,49 @@ function checkForNewOrders() {
 }
 
 function handleOrdersUpdate(orders) {
-    console.log('[Driver] handleOrdersUpdate called, orders:', orders.length);
+    if (!Array.isArray(orders)) return;
+    console.log('[Driver] handleOrdersUpdate:', orders.length, 'buyurtma');
+
+    // Har doim localStorage ni sinxronlashtir
+    const stored = JSON.parse(localStorage.getItem('aquago_orders') || '[]');
+    if (JSON.stringify(orders) !== JSON.stringify(stored)) {
+        localStorage.setItem('aquago_orders', JSON.stringify(orders));
+    }
+
     const pending = orders.filter(o => o.status === 'pending');
-    console.log('[Driver] Pending orders:', pending.length);
-    
-    pending.forEach(o => {
-        addOrderMarkerToMap(o);
-        console.log('[Driver] Added marker for order:', o.id);
+    console.log('[Driver] Pending:', pending.length);
+
+    // Xaritani yangilash (isOnline dan qat'i nazar)
+    pending.forEach(o => addOrderMarkerToMap(o));
+    Object.keys(orderMarkers).forEach(id => {
+        const o = orders.find(x => x.id === id);
+        if (!o || o.status !== 'pending') removeOrderMarker(id);
     });
-    
-    if (!isOnline || activeOrderId) {
-        // Check if active order got paid
-        if (activeOrderId) {
-            const active = orders.find(o => o.id === activeOrderId);
-            if (active && active.status === 'paid') {
-                // Mijoz to'lov qildi!
-                showToast('💰 PUL TUSHDI! Mijoz to\'lov qildi!', 'success', 8000);
-                showNotifPopup('💰 Pul tushdi!', 'Mijoz to\'lovni tasdiqladi');
-                _finishDeliveryAfterPayment(activeOrderId);
-            }
+
+    // Statistikani yangilash
+    refreshDriverStats();
+
+    // Faol buyurtma to'lovini tekshirish
+    if (activeOrderId) {
+        const active = orders.find(o => o.id === activeOrderId);
+        if (active && active.status === 'paid') {
+            showToast('💰 PUL TUSHDI! Mijoz to\'lov qildi!', 'success', 8000);
+            showNotifPopup('💰 Pul tushdi!', 'Mijoz to\'lovni tasdiqladi');
+            _finishDeliveryAfterPayment(activeOrderId);
         }
         return;
     }
-    
+
+    // Alert faqat driver online bo'lsa
+    if (!isOnline) return;
     if (pending.length === 0) {
-        console.log('[Driver] No pending orders');
+        if (pendingAlertId) { clearAlertPopup(); pendingAlertId = null; }
         return;
     }
-    
+
     const firstOrder = pending[0];
-    if (pendingAlertId === firstOrder.id) {
-        console.log('[Driver] Order already alerted:', firstOrder.id);
-        return;
-    }
-    
-    console.log('[Driver] NEW ORDER ALERT:', firstOrder.id);
+    if (pendingAlertId === firstOrder.id) return;
+    console.log('[Driver] YANGI BUYURTMA:', firstOrder.id);
     pendingAlertId = firstOrder.id;
     showNewOrderAlert(firstOrder);
 }
